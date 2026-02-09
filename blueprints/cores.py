@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from core_manager.config_builder import ConfigBuilder, save_config
 from core_manager.process_handler import ProcessHandler
+from core_manager.xray_builder import XrayBuilder
+from core_manager.setup_cores import CoreInstaller
 from database.models import db, Inbound
 import json
 cores_bp = Blueprint('cores', __name__)
@@ -25,3 +27,18 @@ def add_inbound():
     db.session.commit()
     
     return jsonify({"status": "Green", "pid": "Initial-Save-Success"})
+
+@cores_bp.route('/install-core', methods=['POST'])
+def install_core_binaries():
+    """روت برای دانلود و نصب دستی هسته‌ها"""
+    CoreInstaller.setup_environment()
+    return jsonify({"status": "success", "message": "Cores checked/installed."})
+
+@cores_bp.route('/restart', methods=['POST'])
+def restart_core():
+    """اعمال تغییرات و ریستارت سرویس"""
+    success, msg = XrayBuilder.apply_config()
+    if success:
+        return jsonify({"status": "success", "message": msg})
+    else:
+        return jsonify({"status": "error", "message": msg})

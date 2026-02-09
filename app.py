@@ -7,7 +7,7 @@ from database.models import db, Admin, PanelSettings
 from blueprints.auth import auth_bp
 from blueprints.settings import settings_bp
 from blueprints.cores import cores_bp
-
+from blueprints.logs import logs_bp
 def create_app():
     # 1. تنظیمات اولیه اپلیکیشن
     app = Flask(__name__)
@@ -28,6 +28,7 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(settings_bp, url_prefix='/settings')
     app.register_blueprint(cores_bp, url_prefix='/core')
+    app.register_blueprint(logs_bp, url_prefix='/logs')
 
     # 3. ایجاد جداول دیتابیس در اولین اجرا
     with app.app_context():
@@ -80,7 +81,11 @@ def create_app():
 if __name__ == '__main__':
     # ساخت اپلیکیشن
     app = create_app()
-    
+    from core_manager.setup_cores import CoreInstaller
+    try:
+        CoreInstaller.setup_environment()
+    except Exception as e:
+        print(f"Warning: Core setup failed: {e}")
     # خواندن تنظیمات پورت و SSL از دیتابیس
     with app.app_context():
         try:

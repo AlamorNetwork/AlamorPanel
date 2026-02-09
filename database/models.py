@@ -89,6 +89,7 @@ class PanelSettings(db.Model):
     server_port = db.Column(db.Integer, default=5000)
     panel_domain = db.Column(db.String(100))
     secret_path = db.Column(db.String(50), default="/") # e.g., /my-secret-admin
+    sub_port = db.Column(db.Integer, default=2096)
     ssl_cert_path = db.Column(db.String(200))
     ssl_key_path = db.Column(db.String(200))
     system_secret_key = db.Column(db.String(100))

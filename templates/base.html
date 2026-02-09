@@ -3,18 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlamorHub | Neural Network</title>
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <title>AlamorHub | Core Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* استایل اختصاصی سایدبار */
+        .wrapper { display: flex; width: 100%; align-items: stretch; }
+        #sidebar {
+            min-width: 250px; max-width: 250px; min-height: 100vh;
+            background: rgba(5, 7, 10, 0.95); border-right: 1px solid rgba(46, 204, 113, 0.2);
+            transition: all 0.3s; z-index: 1000;
+        }
+        #sidebar.active { margin-left: -250px; }
+        .sidebar-header { padding: 20px; background: rgba(46, 204, 113, 0.1); border-bottom: 1px solid rgba(46, 204, 113, 0.1); }
+        .components { padding: 20px 0; }
+        .components li a {
+            padding: 15px 20px; font-size: 1.1em; display: block; color: #c0c5ce; text-decoration: none;
+            border-left: 3px solid transparent; transition: 0.3s;
+        }
+        .components li a:hover, .components li a.active {
+            color: #fff; background: rgba(46, 204, 113, 0.1); border-left-color: #2ecc71;
+            text-shadow: 0 0 10px #2ecc71;
+        }
+        .components li a i { margin-right: 10px; width: 20px; text-align: center; }
+        #content { width: 100%; padding: 20px; min-height: 100vh; transition: all 0.3s; }
+        
+        /* دکمه QR */
+        #qrcode img { margin: 0 auto; border: 5px solid #fff; border-radius: 10px; }
+    </style>
 </head>
-<body style="background-color: #050505;"> <nav class="navbar navbar-expand-lg navbar-glass sticky-top mb-5">
+<body>
+
+<div class="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header text-center">
+            <h3 class="fw-bold text-white ls-2">ALAMOR<span class="text-primary-neon">HUB</span></h3>
+            <small class="text-white-50 font-monospace">NEURAL CORE v4.0</small>
+        </div>
+
+        <ul class="list-unstyled components">
+            <li>
+                <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' else '' }}">
+                    <i class="fas fa-network-wired"></i> Inbounds
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('cores.manage') }}" class="{{ 'active' if 'cores' in request.endpoint else '' }}">
+                    <i class="fas fa-microchip"></i> Core Manager
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('settings.index') }}" class="{{ 'active' if 'settings' in request.endpoint else '' }}">
+                    <i class="fas fa-cogs"></i> System Settings
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('logs.view_logs') }}" class="{{ 'active' if 'logs' in request.endpoint else '' }}">
+                    <i class="fas fa-terminal"></i> System Logs
+                </a>
+            </li>
+            <li class="mt-5 border-top border-secondary pt-3">
+                <a href="{{ url_for('auth.logout') }}" class="text-danger-neon">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-glass mb-4 rounded-3">
+            <div class="container-fluid">
+                <button type="button" id="sidebarCollapse" class="btn btn-glass btn-sm">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="ms-3 text-white font-monospace text-uppercase" id="pageTitle">Control Panel</span>
+            </div>
         </nav>
 
-    <div class="container pb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} bg-dark border-{{ category }} text-white alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-panel text-center p-4">
+            <h5 class="text-white mb-4">CONNECTION QR</h5>
+            <div id="qrcode" class="d-flex justify-content-center mb-3"></div>
+            <input type="text" id="copyLinkInput" class="form-control text-center mb-3 bg-black text-primary-neon" readonly>
+            <button class="btn btn-glass w-100" onclick="copyQRLink()">COPY LINK</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', function () {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    function showQR(link) {
+        const qrContainer = document.getElementById("qrcode");
+        qrContainer.innerHTML = ""; // Clear previous
+        new QRCode(qrContainer, {
+            text: link,
+            width: 200,
+            height: 200,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+        document.getElementById("copyLinkInput").value = link;
+        new bootstrap.Modal(document.getElementById('qrModal')).show();
+    }
+
+    function copyQRLink() {
+        const copyText = document.getElementById("copyLinkInput");
+        copyText.select();
+        document.execCommand("copy");
+        alert("Link Copied to Clipboard!");
+    }
+</script>
 </body>
 </html>
