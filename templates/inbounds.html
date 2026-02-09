@@ -96,6 +96,19 @@
         </div>
     </div>
 </div>
+<div class="glass-card p-8 mt-6">
+    <h2 class="section-title text-orange-400">Advanced Headers & Fallbacks</h2>
+    <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <textarea id="fallbacks" placeholder="Fallbacks (JSON Array)" class="cyber-input h-24 text-xs font-mono"></textarea>
+            <textarea id="request_header" placeholder="Request Headers (JSON)" class="cyber-input h-24 text-xs font-mono"></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <input type="text" id="domain_strategy" placeholder="Domain Strategy (AsIs, UseIP...)" class="cyber-input">
+            <input type="text" id="interface_name" placeholder="Interface Name (eth0...)" class="cyber-input">
+        </div>
+    </div>
+</div>
 
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}

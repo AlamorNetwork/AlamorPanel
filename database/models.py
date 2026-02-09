@@ -44,6 +44,7 @@ class TrafficLog(db.Model):
 class Inbound(db.Model):
     __tablename__ = 'inbound'
     __table_args__ = {'extend_existing': True}
+
     id = db.Column(db.Integer, primary_key=True)
     enable = db.Column(db.Boolean, default=True)
     remark = db.Column(db.String(100))
@@ -51,16 +52,22 @@ class Inbound(db.Model):
     listen = db.Column(db.String(50), default="0.0.0.0")
     port = db.Column(db.Integer, unique=True)
     
-    # Traffic & Time
-    total_flow = db.Column(db.BigInteger, default=0) # 0 means unlimited
-    used_flow = db.Column(db.BigInteger, default=0)
+    # Traffic
+    total = db.Column(db.BigInteger, default=0) # Total Flow
+    up = db.Column(db.BigInteger, default=0)
+    down = db.Column(db.BigInteger, default=0)
     expiry_time = db.Column(db.BigInteger, default=0)
     
-    # JSON Fields for complex settings
-    auth_settings = db.Column(db.Text)      # Authentication, Decryption, Encryption
-    fallback_settings = db.Column(db.Text)  # Fallbacks list
-    stream_settings = db.Column(db.Text)    # Transmission, Sockopt, TCP settings
+    # Settings (JSON string)
+    # شامل: Authentication, Fallbacks, Proxy Protocol
+    settings = db.Column(db.Text) 
     
-    # Subscription & API
-    sub_id = db.Column(db.String(50), unique=True) # برای لینک ساب اختصاصی
-    api_enabled = db.Column(db.Boolean, default=True)
+    # Stream Settings (JSON string)
+    # شامل: Transmission, Sockopt, TLS, Reality, TCP settings
+    stream_settings = db.Column(db.Text)
+    
+    # Sniffing (JSON string)
+    sniffing = db.Column(db.Text)
+
+    def __repr__(self):
+        return f'<Inbound {self.remark}>'
