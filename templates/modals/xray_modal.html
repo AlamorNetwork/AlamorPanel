@@ -336,18 +336,18 @@
 </div>
 
 <script>
-    // Logic to show/hide sections based on protocol
+    // 1. مدیریت نمایش فیلدها بر اساس پروتکل
     function updateXrayUI() {
-        const proto = document.getElementById('protocolSelect').value;
+        const proto = document.querySelector('[name="protocol"]').value;
         
-        // Hide all sections
+        // مخفی کردن همه بخش‌های پروتکل
         document.querySelectorAll('.protocol-section').forEach(el => el.classList.add('d-none'));
         
-        // Show specific section
-        let section = document.querySelector(`.protocol-section[data-proto~="${proto}"]`);
+        // نمایش بخش انتخاب شده
+        const section = document.querySelector(`.protocol-section[data-proto~="${proto}"]`);
         if(section) section.classList.remove('d-none');
 
-        // Toggle Stream Settings visibility (Not needed for WireGuard or Dokodemo)
+        // مدیریت نمایش تنظیمات استریم (برخی پروتکل‌ها مثل WireGuard نیازی ندارند)
         const streamAccordion = document.getElementById('streamAccordion');
         if (['wireguard', 'dokodemo-door'].includes(proto)) {
             streamAccordion.classList.add('d-none');
@@ -356,6 +356,7 @@
         }
     }
 
+    // 2. مدیریت فیلدهای ترنسپورت (TCP, WS, GRPC)
     function updateTransportFields() {
         const trans = document.querySelector('[name="stream_network"]').value;
         document.querySelectorAll('.trans-section').forEach(el => el.classList.add('d-none'));
@@ -364,6 +365,7 @@
         sections.forEach(el => el.classList.remove('d-none'));
     }
 
+    // 3. مدیریت فیلدهای امنیت (TLS, Reality)
     function updateSecurityFields() {
         const sec = document.querySelector('[name="stream_security"]').value;
         document.querySelectorAll('.sec-section').forEach(el => el.classList.add('d-none'));
@@ -372,29 +374,161 @@
         if(section) section.classList.remove('d-none');
     }
 
-    // Helper generators (mock for UI)
+    // 4. تولید UUID
     function genUUID(btn) {
         const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
             const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
-        btn.previousElementSibling.value = uuid;
+        const input = btn.previousElementSibling;
+        input.value = uuid;
     }
 
+    // 5. تولید کلیدهای WireGuard / Reality (فعلا رندوم تستی)
     function genX25519() {
-        // In real app, fetch from backend: /api/utils/x25519
-        alert("Please fetch keys from server backend in production.");
+        // در نسخه نهایی باید از بک‌تند گرفته شود
+        alert("Generating keys via backend...");
     }
 
-    function submitXrayConfig() {
-        const form = document.getElementById('xrayForm');
-        const formData = new FormData(form);
+    // --- تابع اصلی: ارسال فرم به سرور ---
+    async function submitXrayConfig() {
+        const btn = document.querySelector('button[onclick="submitXrayConfig()"]');
+        const originalText = btn.innerHTML;
         
-        // Convert to JSON and handle logic in backend
-        startInstall('xray_advanced', 'xrayForm');
+        // حالت لودینگ
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> DEPLOYING...';
+
+        try {
+            // جمع‌آوری داده‌های خام فرم
+            const form = document.getElementById('xrayForm');
+            const formData = new FormData(form);
+            const raw = Object.fromEntries(formData.entries());
+
+            // ساخت ساختار استاندارد برای بک‌تند
+            // (مطابق با چیزی که در blueprints/cores.py نوشتیم)
+            const payload = {
+                base: {
+                    remark: raw.remark || `Node-${raw.port}`,
+                    protocol: raw.protocol,
+                    port: parseInt(raw.port),
+                    listen: raw.listen || "0.0.0.0",
+                    total: parseInt(raw.total_flow) || 0,
+                    enabled: true
+                },
+                settings: {}, // تنظیمات خاص پروتکل
+                stream: {},   // تنظیمات شبکه
+                sniffing: { enabled: true, destOverride: ["http", "tls", "quic"] }
+            };
+
+            // پر کردن settings بر اساس پروتکل
+            switch (raw.protocol) {
+                case 'vless':
+                    payload.settings = {
+                        clients: [{
+                            id: raw.vless_id,
+                            flow: raw.vless_flow || ''
+                        }],
+                        decryption: "none"
+                    };
+                    break;
+                case 'vmess':
+                    payload.settings = {
+                        clients: [{
+                            id: raw.vmess_id,
+                            alterId: 0
+                        }]
+                    };
+                    break;
+                case 'trojan':
+                    payload.settings = {
+                        clients: [{
+                            password: raw.auth_user
+                        }]
+                    };
+                    break;
+                case 'shadowsocks':
+                    payload.settings = {
+                        method: raw.ss_method,
+                        password: raw.ss_password,
+                        network: "tcp,udp"
+                    };
+                    break;
+                case 'wireguard':
+                    // تنظیمات وایرگارد
+                    payload.settings = {
+                        secretKey: raw.wg_private_key,
+                        peers: raw.wg_peers ? JSON.parse(raw.wg_peers) : [],
+                        mtu: parseInt(raw.wg_mtu) || 1420
+                    };
+                    break;
+            }
+
+            // پر کردن stream settings (فقط برای پروتکل‌های پروکسی)
+            if (!['wireguard', 'dokodemo-door'].includes(raw.protocol)) {
+                payload.stream = {
+                    network: raw.stream_network,
+                    security: raw.stream_security,
+                    sockopt: { mark: 0, tcpFastOpen: true }
+                };
+
+                // اضافه کردن تنظیمات شبکه (WS/GRPC/XHTTP)
+                if (raw.stream_network === 'ws') {
+                    payload.stream.wsSettings = { path: raw.trans_path, headers: { Host: raw.trans_host } };
+                } else if (raw.stream_network === 'grpc') {
+                    payload.stream.grpcSettings = { serviceName: raw.grpc_service, multiMode: raw.grpc_multi === 'on' };
+                } else if (raw.stream_network === 'xhttp') {
+                    payload.stream.xhttpSettings = { mode: raw.xhttp_mode, path: raw.trans_path };
+                }
+
+                // اضافه کردن تنظیمات امنیت (TLS/REALITY)
+                if (raw.stream_security === 'tls') {
+                    payload.stream.tlsSettings = {
+                        certificates: [{ certificateFile: raw.tls_cert, keyFile: raw.tls_key }]
+                    };
+                } else if (raw.stream_security === 'reality') {
+                    payload.stream.realitySettings = {
+                        show: false,
+                        dest: raw.reality_dest,
+                        xver: 0,
+                        serverNames: raw.reality_snis ? raw.reality_snis.split(',') : [],
+                        privateKey: raw.reality_key,
+                        shortIds: raw.reality_shortids ? [raw.reality_shortids] : []
+                    };
+                }
+            }
+
+            // ارسال به سرور
+            const response = await fetch('/core/add-inbound', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                // موفقیت: بستن مودال و رفرش
+                const modalEl = document.getElementById('xrayModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                
+                // نمایش پیام موفقیت (اختیاری) و رفرش
+                window.location.reload(); 
+            } else {
+                alert("ERROR: " + result.message);
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("System Error: " + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'DEPLOY CONFIGURATION';
+        }
     }
 
-    // Init UI
+    // مقداردهی اولیه هنگام لود صفحه
     document.addEventListener('DOMContentLoaded', () => {
         updateXrayUI();
         updateTransportFields();
