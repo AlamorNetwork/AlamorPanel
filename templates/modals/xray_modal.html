@@ -4,35 +4,33 @@
             <div class="modal-header border-0 border-bottom border-secondary p-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3 border border-primary border-opacity-25">
-                        <i class="fas fa-microchip fa-2x text-primary-neon"></i>
+                        <i class="fas fa-network-wired fa-2x text-primary-neon"></i>
                     </div>
                     <div>
-                        <h4 class="modal-title fw-bold text-white ls-2">NEW <span class="text-primary-neon">CONFIG</span></h4>
-                        <small class="text-white-50 font-monospace">PROTOCOL & NETWORK SETUP</small>
+                        <h4 class="modal-title fw-bold text-white ls-2">CREATE <span class="text-primary-neon">INBOUND</span></h4>
+                        <small class="text-white-50 font-monospace">XRAY CORE v1.8+</small>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             
-            <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
+            <div class="modal-body p-4">
                 <form id="xrayForm">
                     <div class="glass-card p-4 mb-4 border-start border-4 border-primary">
-                        <h6 class="text-primary-neon small fw-bold mb-3">BASE CONFIGURATION</h6>
-                        <div class="row g-4">
+                        <h6 class="text-primary-neon small fw-bold mb-3"><i class="fas fa-cog me-2"></i>BASE CONFIG</h6>
+                        <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="text-muted small fw-bold">PROTOCOL</label>
-                                <select id="protocol_select" class="form-select bg-dark text-white" onchange="updateXrayUI()">
+                                <select id="proto_sel" class="form-select bg-dark text-white" onchange="updateUI()">
                                     <option value="vless">VLESS</option>
                                     <option value="vmess">VMess</option>
                                     <option value="trojan">Trojan</option>
                                     <option value="shadowsocks">Shadowsocks</option>
-                                    <option value="wireguard">WireGuard</option>
-                                    <option value="dokodemo-door">Dokodemo-door</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="text-muted small fw-bold">NAME (REMARK)</label>
-                                <input id="remark" class="form-control" placeholder="Config-Name">
+                                <label class="text-muted small fw-bold">REMARK (NAME)</label>
+                                <input id="remark" class="form-control" placeholder="Config Name">
                             </div>
                             <div class="col-md-2">
                                 <label class="text-muted small fw-bold">PORT</label>
@@ -40,97 +38,69 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="text-muted small fw-bold">LISTEN IP</label>
-                                <input id="listen_ip" class="form-control" value="0.0.0.0" placeholder="0.0.0.0">
+                                <input id="listen" class="form-control font-monospace" value="0.0.0.0">
                             </div>
                             <div class="col-md-2">
-                                <label class="text-muted small fw-bold">TOTAL GB</label>
-                                <input id="total_gb" type="number" class="form-control" placeholder="0 = Unl">
+                                <label class="text-muted small fw-bold">TRAFFIC LIMIT (GB)</label>
+                                <input id="total" type="number" class="form-control" placeholder="0 = Unlimited">
                             </div>
                         </div>
                     </div>
 
-                    <div id="protocol_container">
+                    <div id="protocol_settings" class="mb-4">
+                        <div id="uuid_box" class="glass-card p-4 border-start border-4 border-info">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-9">
+                                    <label class="text-muted small fw-bold">UUID (USER ID)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark border-secondary"><i class="fas fa-fingerprint text-info"></i></span>
+                                        <input id="uuid" class="form-control font-monospace text-warning fw-bold">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="genUUID()"><i class="fas fa-sync"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-md-3" id="flow_box">
+                                    <label class="text-muted small fw-bold">FLOW</label>
+                                    <select id="flow" class="form-select">
+                                        <option value="">None</option>
+                                        <option value="xtls-rprx-vision" selected>xtls-rprx-vision</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="pass_box" class="glass-card p-4 border-start border-4 border-success d-none">
+                            <div class="row g-3">
+                                <div class="col-md-4" id="method_box">
+                                    <label class="text-muted small fw-bold">ENCRYPTION</label>
+                                    <select id="method" class="form-select">
+                                        <option value="aes-128-gcm">aes-128-gcm</option>
+                                        <option value="aes-256-gcm">aes-256-gcm</option>
+                                        <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="text-muted small fw-bold">PASSWORD</label>
+                                    <input id="password" class="form-control font-monospace">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-4 border-start border-4 border-warning">
+                        <h6 class="text-warning small fw-bold mb-3"><i class="fas fa-shield-alt me-2"></i>STREAM & SECURITY</h6>
                         
-                        <div class="proto-box d-none" id="box_vless">
-                            <div class="glass-card p-4 border-start border-4 border-info">
-                                <h6 class="text-info small fw-bold mb-3">VLESS SETTINGS</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-8">
-                                        <label class="text-muted small">UUID</label>
-                                        <div class="input-group">
-                                            <input id="vless_uuid" class="form-control font-monospace text-warning">
-                                            <button type="button" class="btn btn-outline-secondary" onclick="generateUUID('vless_uuid')"><i class="fas fa-sync"></i></button>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="text-muted small">FLOW</label>
-                                        <select id="vless_flow" class="form-select">
-                                            <option value="">None</option>
-                                            <option value="xtls-rprx-vision" selected>xtls-rprx-vision</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="proto-box d-none" id="box_vmess">
-                            <div class="glass-card p-4 border-start border-4 border-warning">
-                                <h6 class="text-warning small fw-bold mb-3">VMESS SETTINGS</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-12">
-                                        <label class="text-muted small">UUID</label>
-                                        <div class="input-group">
-                                            <input id="vmess_uuid" class="form-control font-monospace text-warning">
-                                            <button type="button" class="btn btn-outline-secondary" onclick="generateUUID('vmess_uuid')"><i class="fas fa-sync"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="proto-box d-none" id="box_trojan">
-                            <div class="glass-card p-4 border-start border-4 border-light">
-                                <h6 class="text-white small fw-bold mb-3">TROJAN PASSWORD</h6>
-                                <input id="trojan_password" class="form-control" placeholder="MyStrongPassword">
-                            </div>
-                        </div>
-
-                        <div class="proto-box d-none" id="box_shadowsocks">
-                            <div class="glass-card p-4 border-start border-4 border-success">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="text-muted small">METHOD</label>
-                                        <select id="ss_method" class="form-select">
-                                            <option value="aes-128-gcm">aes-128-gcm</option>
-                                            <option value="aes-256-gcm">aes-256-gcm</option>
-                                            <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="text-muted small">PASSWORD</label>
-                                        <input id="ss_password" class="form-control">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        </div>
-
-                    <div class="glass-card p-4 mt-4" id="stream_settings_box">
-                        <h6 class="text-secondary small fw-bold mb-3">TRANSPORT & SECURITY</h6>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="text-muted small">NETWORK</label>
-                                <select id="net_type" class="form-select" onchange="updateTransportFields()">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small fw-bold">NETWORK (TRANSPORT)</label>
+                                <select id="net" class="form-select" onchange="updateUI()">
                                     <option value="tcp">TCP</option>
-                                    <option value="ws">WebSocket (WS)</option>
+                                    <option value="ws">WebSocket</option>
                                     <option value="grpc">gRPC</option>
-                                    <option value="xhttp">XHTTP</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label class="text-muted small">SECURITY</label>
-                                <select id="sec_type" class="form-select" onchange="updateSecurityFields()">
+                            <div class="col-md-6">
+                                <label class="text-muted small fw-bold">SECURITY</label>
+                                <select id="sec" class="form-select" onchange="updateUI()">
                                     <option value="none">None</option>
                                     <option value="tls">TLS</option>
                                     <option value="reality">REALITY</option>
@@ -138,46 +108,63 @@
                             </div>
                         </div>
 
-                        <div id="trans_fields" class="mt-3 p-3 border border-secondary border-opacity-25 rounded d-none">
+                        <div id="trans_box" class="p-3 bg-black bg-opacity-25 rounded border border-secondary border-opacity-25 mb-3 d-none">
                             <div class="row g-3">
                                 <div class="col-md-8">
-                                    <label class="text-muted small">PATH / SERVICE NAME</label>
-                                    <input id="trans_path" class="form-control" placeholder="/path or serviceName" value="/">
+                                    <label class="text-muted small" id="path_label">PATH / SERVICE NAME</label>
+                                    <input id="trans_path" class="form-control" placeholder="/" value="/">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="text-muted small">HOST</label>
-                                    <input id="trans_host" class="form-control" placeholder="host.com">
+                                    <label class="text-muted small">HOST HEADER</label>
+                                    <input id="trans_host" class="form-control" placeholder="domain.com">
                                 </div>
                             </div>
                         </div>
 
-                        <div id="sec_fields_reality" class="mt-3 p-3 border border-success border-opacity-25 rounded d-none">
-                            <h6 class="text-success small fw-bold">REALITY CONFIG</h6>
-                            <div class="row g-2">
-                                <div class="col-md-6"><input id="rea_dest" class="form-control" placeholder="Dest (yahoo.com:443)"></div>
-                                <div class="col-md-6"><input id="rea_sni" class="form-control" placeholder="SNI (yahoo.com)"></div>
+                        <div id="reality_box" class="p-3 bg-black bg-opacity-25 rounded border border-success border-opacity-25 d-none">
+                            <h6 class="text-success small fw-bold">REALITY KEYS</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-muted small">SNI (Target Domain)</label>
+                                    <input id="rea_sni" class="form-control" placeholder="yahoo.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Dest (Fallback)</label>
+                                    <input id="rea_dest" class="form-control" placeholder="yahoo.com:443" value="yahoo.com:443">
+                                </div>
                                 <div class="col-md-12">
+                                    <label class="text-muted small">Private Key</label>
                                     <div class="input-group">
-                                        <input id="rea_key" class="form-control font-monospace" placeholder="Private Key">
-                                        <button type="button" class="btn btn-outline-success" onclick="alert('Generate on backend')">GEN</button>
+                                        <input id="rea_pk" class="form-control font-monospace text-success">
+                                        <button type="button" class="btn btn-outline-success" onclick="genRealityKeys()">GENERATE KEYS</button>
                                     </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="text-muted small">Short IDs</label>
+                                    <input id="rea_short" class="form-control font-monospace" value="">
                                 </div>
                             </div>
                         </div>
-                        
-                         <div id="sec_fields_tls" class="mt-3 p-3 border border-warning border-opacity-25 rounded d-none">
-                            <h6 class="text-warning small fw-bold">TLS CONFIG</h6>
-                            <div class="row g-2">
-                                <div class="col-md-12"><input id="tls_crt" class="form-control" placeholder="Cert Path"></div>
-                                <div class="col-md-12"><input id="tls_key" class="form-control" placeholder="Key Path"></div>
+
+                        <div id="tls_box" class="p-3 bg-black bg-opacity-25 rounded border border-warning border-opacity-25 d-none">
+                             <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="text-muted small">Certificate Path</label>
+                                    <input id="tls_cert" class="form-control" placeholder="/etc/letsencrypt/live/domain/fullchain.pem">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="text-muted small">Private Key Path</label>
+                                    <input id="tls_key" class="form-control" placeholder="/etc/letsencrypt/live/domain/privkey.pem">
+                                </div>
                             </div>
                         </div>
+
                     </div>
                 </form>
             </div>
 
             <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-glass w-100 py-3 fw-bold shadow-lg" onclick="deployConfig()">
+                <button type="button" class="btn btn-glass w-100 py-3 fw-bold shadow-lg text-primary-neon border-primary-neon" onclick="submitConfig()">
                     <i class="fas fa-rocket me-2"></i>DEPLOY CONFIGURATION
                 </button>
             </div>
@@ -186,178 +173,208 @@
 </div>
 
 <script>
-    // --- UI Logic ---
-    function updateXrayUI() {
-        const proto = document.getElementById('protocol_select').value;
-        
-        // Hide all proto boxes
-        document.querySelectorAll('.proto-box').forEach(el => el.classList.add('d-none'));
-        
-        // Show selected
-        const box = document.getElementById(`box_${proto}`);
-        if(box) box.classList.remove('d-none');
-        
-        // Stream settings toggle
-        const streamBox = document.getElementById('stream_settings_box');
-        if(['wireguard', 'dokodemo-door'].includes(proto)) {
-            streamBox.classList.add('d-none');
-        } else {
-            streamBox.classList.remove('d-none');
-        }
-        
-        // Generate UUID automatically if empty
-        if(proto === 'vless' && !document.getElementById('vless_uuid').value) generateUUID('vless_uuid');
-        if(proto === 'vmess' && !document.getElementById('vmess_uuid').value) generateUUID('vmess_uuid');
-    }
-
-    function updateTransportFields() {
-        const net = document.getElementById('net_type').value;
-        const fieldBox = document.getElementById('trans_fields');
-        if (['ws', 'grpc', 'xhttp', 'httpupgrade'].includes(net)) {
-            fieldBox.classList.remove('d-none');
-        } else {
-            fieldBox.classList.add('d-none');
-        }
-    }
-
-    function updateSecurityFields() {
-        const sec = document.getElementById('sec_type').value;
-        document.getElementById('sec_fields_reality').classList.add('d-none');
-        document.getElementById('sec_fields_tls').classList.add('d-none');
-        
-        if (sec === 'reality') document.getElementById('sec_fields_reality').classList.remove('d-none');
-        if (sec === 'tls') document.getElementById('sec_fields_tls').classList.remove('d-none');
-    }
-
-    function generateUUID(targetId) {
+    // --- 1. توابع کمکی (Generator) ---
+    
+    // تولید UUID ورژن 4 استاندارد
+    function genUUID() {
         const uuid = crypto.randomUUID();
-        document.getElementById(targetId).value = uuid;
+        document.getElementById('uuid').value = uuid;
     }
 
-    // --- Main Logic: Collect & Send ---
-    async function deployConfig() {
-        const btn = document.querySelector('button[onclick="deployConfig()"]');
+    // تولید کلیدهای Reality (شبیه‌سازی شده - برای امنیت بالا بهتر است سمت سرور باشد، اما این کار میکند)
+    // نکته: برای کلید واقعی X25519 نیاز به کتابخانه خاص است. 
+    // اینجا فعلا یک رشته رندوم بیس64 تولید میکنیم تا فیلد خالی نباشد.
+    // **برای پروداکشن واقعی**، بهتر است این دکمه یک درخواست به API بکند.
+    async function genRealityKeys() {
+        // ایجاد رشته تصادفی شبیه کلید (فقط برای پر کردن فرم)
+        // در نسخه نهایی این تابع را به بک‌تند وصل میکنیم
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        const key = btoa(String.fromCharCode.apply(null, array)).replace(/\+/g, '-').replace(/\//g, '_').substring(0, 43);
+        
+        document.getElementById('rea_pk').value = key;
+        
+        // ShortId
+        const short = Math.random().toString(16).substr(2, 8);
+        document.getElementById('rea_short').value = short;
+    }
+
+    // --- 2. مدیریت ظاهر (UI Logic) ---
+    function updateUI() {
+        const proto = document.getElementById('proto_sel').value;
+        const net = document.getElementById('net').value;
+        const sec = document.getElementById('sec').value;
+
+        // مدیریت پنل‌های پروتکل
+        const uuidBox = document.getElementById('uuid_box');
+        const passBox = document.getElementById('pass_box');
+        const flowBox = document.getElementById('flow_box');
+        const methodBox = document.getElementById('method_box');
+
+        if (['vless', 'vmess'].includes(proto)) {
+            uuidBox.classList.remove('d-none');
+            passBox.classList.add('d-none');
+            // Flow فقط برای VLESS+Reality/TLS فعال باشد
+            if (proto === 'vless' && ['tls', 'reality'].includes(sec) && net === 'tcp') {
+                flowBox.classList.remove('d-none');
+            } else {
+                flowBox.classList.add('d-none');
+            }
+        } else {
+            uuidBox.classList.add('d-none');
+            passBox.classList.remove('d-none');
+            // Method فقط برای Shadowsocks
+            if (proto === 'shadowsocks') methodBox.classList.remove('d-none');
+            else methodBox.classList.add('d-none');
+        }
+
+        // مدیریت پنل‌های شبکه
+        const transBox = document.getElementById('trans_box');
+        const pathLabel = document.getElementById('path_label');
+        if (['ws', 'grpc'].includes(net)) {
+            transBox.classList.remove('d-none');
+            pathLabel.innerText = net === 'ws' ? 'WEBSOCKET PATH' : 'GRPC SERVICE NAME';
+        } else {
+            transBox.classList.add('d-none');
+        }
+
+        // مدیریت پنل‌های امنیت
+        document.getElementById('reality_box').classList.add('d-none');
+        document.getElementById('tls_box').classList.add('d-none');
+        if (sec === 'reality') document.getElementById('reality_box').classList.remove('d-none');
+        if (sec === 'tls') document.getElementById('tls_box').classList.remove('d-none');
+
+        // تولید خودکار UUID اگر خالی بود
+        if (!document.getElementById('uuid').value && ['vless', 'vmess'].includes(proto)) {
+            genUUID();
+        }
+    }
+
+    // --- 3. ارسال به سرور (Core Logic) ---
+    async function submitConfig() {
+        const btn = document.querySelector('button[onclick="submitConfig()"]');
+        const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = "DEPLOYING...";
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> BUILDING JSON...';
 
         try {
-            // 1. Base Info
-            const protocol = document.getElementById('protocol_select').value;
+            // --- جمع‌آوری داده‌ها ---
+            const p = {
+                proto: document.getElementById('proto_sel').value,
+                remark: document.getElementById('remark').value,
+                port: parseInt(document.getElementById('port').value),
+                listen: document.getElementById('listen').value || "0.0.0.0",
+                total: parseInt(document.getElementById('total').value) || 0,
+                
+                // Auth
+                uuid: document.getElementById('uuid').value,
+                flow: document.getElementById('flow').value,
+                pass: document.getElementById('password').value,
+                method: document.getElementById('method').value,
+                
+                // Stream
+                net: document.getElementById('net').value,
+                sec: document.getElementById('sec').value,
+                path: document.getElementById('trans_path').value,
+                host: document.getElementById('trans_host').value,
+                
+                // Security Keys
+                tlsCert: document.getElementById('tls_cert').value,
+                tlsKey: document.getElementById('tls_key').value,
+                reaSni: document.getElementById('rea_sni').value,
+                reaDest: document.getElementById('rea_dest').value,
+                reaPk: document.getElementById('rea_pk').value,
+                reaShort: document.getElementById('rea_short').value
+            };
+
+            // --- ساخت Payload استاندارد برای Xray ---
+            // این ساختار دقیقا مطابق چیزی است که models.py و xray_builder.py نیاز دارند
+            
             const payload = {
                 base: {
-                    remark: document.getElementById('remark').value || `Node-${document.getElementById('port').value}`,
-                    protocol: protocol,
-                    port: parseInt(document.getElementById('port').value),
-                    listen: document.getElementById('listen_ip').value || "0.0.0.0", // ایپی پیش‌فرض
-                    total: parseInt(document.getElementById('total_gb').value) || 0,
+                    protocol: p.proto,
+                    remark: p.remark || `Inbound-${p.port}`,
+                    port: p.port,
+                    listen: p.listen,
+                    total: p.total
                 },
                 settings: {},
                 stream: {},
                 sniffing: { enabled: true, destOverride: ["http", "tls", "quic"] }
             };
 
-            // 2. Protocol Specifics
-            if (protocol === 'vless') {
+            // 1. تنظیمات Settings (Auth)
+            if (p.proto === 'vless') {
                 payload.settings = {
-                    clients: [{
-                        id: document.getElementById('vless_uuid').value,
-                        flow: document.getElementById('vless_flow').value
-                    }],
-                    decryption: "none"
+                    clients: [{ id: p.uuid, flow: (p.sec === 'reality' || p.sec === 'tls') ? p.flow : "" }],
+                    decryption: "none",
+                    fallbacks: []
                 };
-            } else if (protocol === 'vmess') {
-                payload.settings = {
-                    clients: [{
-                        id: document.getElementById('vmess_uuid').value,
-                        alterId: 0
-                    }]
+            } else if (p.proto === 'vmess') {
+                payload.settings = { clients: [{ id: p.uuid, alterId: 0 }] };
+            } else if (p.proto === 'trojan') {
+                payload.settings = { clients: [{ password: p.pass || "password" }] };
+            } else if (p.proto === 'shadowsocks') {
+                payload.settings = { method: p.method, password: p.pass || "password", network: "tcp,udp" };
+            }
+
+            // 2. تنظیمات Stream Settings
+            payload.stream = {
+                network: p.net,
+                security: p.sec,
+                sockopt: { mark: 0, tcpFastOpen: true }
+            };
+
+            // Transport details
+            if (p.net === 'ws') {
+                payload.stream.wsSettings = { path: p.path, headers: { Host: p.host } };
+            } else if (p.net === 'grpc') {
+                payload.stream.grpcSettings = { serviceName: p.path, multiMode: true };
+            }
+
+            // Security details
+            if (p.sec === 'tls') {
+                payload.stream.tlsSettings = {
+                    certificates: [{ certificateFile: p.tlsCert, keyFile: p.tlsKey }]
                 };
-            } else if (protocol === 'trojan') {
-                payload.settings = {
-                    clients: [{
-                        password: document.getElementById('trojan_password').value
-                    }]
-                };
-            } else if (protocol === 'shadowsocks') {
-                payload.settings = {
-                    method: document.getElementById('ss_method').value,
-                    password: document.getElementById('ss_password').value,
-                    network: "tcp,udp"
+            } else if (p.sec === 'reality') {
+                payload.stream.realitySettings = {
+                    show: false,
+                    dest: p.reaDest,
+                    serverNames: p.reaSni ? p.reaSni.split(',') : [],
+                    privateKey: p.reaPk,
+                    shortIds: [p.reaShort]
                 };
             }
 
-            // 3. Stream Settings (If applicable)
-            if (!['wireguard', 'dokodemo-door'].includes(protocol)) {
-                const net = document.getElementById('net_type').value;
-                const sec = document.getElementById('sec_type').value;
-                
-                payload.stream = {
-                    network: net,
-                    security: sec,
-                    sockopt: { mark: 0, tcpFastOpen: true }
-                };
+            // --- ارسال به بک‌تند ---
+            console.log("Submitting Payload:", payload); // دیباگ
 
-                // Network Details
-                if (net === 'ws') {
-                    payload.stream.wsSettings = {
-                        path: document.getElementById('trans_path').value,
-                        headers: { Host: document.getElementById('trans_host').value }
-                    };
-                } else if (net === 'grpc') {
-                    payload.stream.grpcSettings = {
-                        serviceName: document.getElementById('trans_path').value,
-                        multiMode: true
-                    };
-                }
-
-                // Security Details
-                if (sec === 'reality') {
-                    payload.stream.realitySettings = {
-                        show: false,
-                        dest: document.getElementById('rea_dest').value,
-                        serverNames: [document.getElementById('rea_sni').value],
-                        privateKey: document.getElementById('rea_key').value,
-                        shortIds: [""]
-                    };
-                } else if (sec === 'tls') {
-                    payload.stream.tlsSettings = {
-                        certificates: [{
-                            certificateFile: document.getElementById('tls_crt').value,
-                            keyFile: document.getElementById('tls_key').value
-                        }]
-                    };
-                }
-            }
-
-            // 4. Send to Backend
-            console.log("Sending Payload:", payload); // برای دیباگ
-
-            const response = await fetch('/core/add-inbound', {
+            const res = await fetch('/core/add-inbound', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-
-            const result = await response.json();
             
-            if (result.status === 'success') {
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                // موفقیت -> ریلود
                 window.location.reload();
             } else {
-                alert("Error: " + result.message);
+                alert("Server Error: " + data.message);
             }
 
         } catch (e) {
-            alert("Client Error: " + e.message);
+            alert("Application Error: " + e);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = "DEPLOY CONFIGURATION";
+            btn.innerHTML = originalText;
         }
     }
 
-    // Init
+    // راه‌اندازی اولیه
     document.addEventListener('DOMContentLoaded', () => {
-        updateXrayUI();
-        updateTransportFields();
-        updateSecurityFields();
+        updateUI();
     });
 </script>
