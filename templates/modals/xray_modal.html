@@ -1,0 +1,60 @@
+<div class="modal fade" id="xrayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <form id="xrayForm" class="modal-content glass-panel border-0 p-0">
+            <div class="modal-header border-0 border-bottom border-secondary">
+                <h5 class="modal-title fw-bold text-primary-neon">
+                    <i class="fas fa-microchip me-2"></i>ALAMOR XRAY CONFIGURATOR
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
+                <div class="glass-card p-4 mb-4 border-primary-neon">
+                    <h6 class="text-primary-neon small fw-bold mb-3 ls-2">CORE IDENTITY & TRAFFIC</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="small text-muted">REMARK</label><input name="remark" class="form-control" placeholder="Node-01"></div>
+                        <div class="col-md-3">
+                            <label class="small text-muted">PROTOCOL</label>
+                            <select name="protocol" class="form-select">
+                                <option value="vless">VLESS</option>
+                                <option value="vmess">VMess</option>
+                                <option value="trojan">Trojan</option>
+                                <option value="shadowsocks">Shadowsocks 2022</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2"><label class="small text-muted">PORT</label><input name="port" type="number" class="form-control" value="443"></div>
+                        <div class="col-md-3"><label class="small text-muted">TOTAL FLOW (GB)</label><input name="total" type="number" class="form-control" placeholder="0 = ∞"></div>
+                    </div>
+                </div>
+
+                <div class="accordion" id="xrayAccordion">
+                    <div class="accordion-item glass-card bg-transparent mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransport">
+                                <i class="fas fa-shuttle-space me-2"></i> Transport Layer (XHTTP / XMUX)
+                            </button>
+                        </h2>
+                        <div id="collapseTransport" class="accordion-collapse collapse" data-bs-parent="#xrayAccordion">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="small text-muted">NETWORK</label>
+                                        <select name="network" class="form-select">
+                                            <option value="raw">RAW (TCP)</option>
+                                            <option value="xhttp">XHTTP (Native)</option>
+                                            <option value="ws">WebSocket</option>
+                                            <option value="grpc">gRPC</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-8"><label class="small text-muted">PATH</label><input name="path" class="form-control" placeholder="/path"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-glass w-100 py-3 fw-bold" onclick="alert('Deployment sequence initiated...')">DEPLOY CONFIGURATION</button>
+            </div>
+        </form>
+    </div>
+</div>
