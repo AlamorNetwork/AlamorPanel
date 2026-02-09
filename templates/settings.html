@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center animate__animated animate__fadeIn">
+    <div class="col-lg-8">
+        
+        <div class="glass-card p-4 mb-4 d-flex justify-content-between align-items-center">
+            <h2 class="text-white mb-0 ls-2">SYSTEM <span class="text-primary-neon">SETTINGS</span></h2>
+            <span class="badge bg-success bg-opacity-25 text-success border border-success">
+                <i class="fas fa-shield-alt me-1"></i> SECURE
+            </span>
+        </div>
+
+        <div class="glass-card p-5 mb-4 border-primary-neon-hover">
+            <h4 class="text-white mb-4"><i class="fas fa-network-wired text-primary-neon me-2"></i>Network & Path</h4>
+            <form method="POST" action="{{ url_for('settings.index') }}">
+                <input type="hidden" name="action" value="update_network">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small">PANEL PORT</label>
+                        <input type="number" name="port" class="form-control text-center fs-4" value="{{ settings.server_port }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small">SECRET PATH</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-black border-secondary">/</span>
+                            <input type="text" name="path" class="form-control" value="{{ settings.secret_path.lstrip('/') }}" placeholder="admin-panel">
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <button class="btn btn-glass w-100">SAVE & RESTART</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="glass-card p-5 border-danger-neon-hover">
+            <h4 class="text-white mb-4"><i class="fas fa-lock text-danger-neon me-2"></i>SSL & Encryption</h4>
+            
+            <form method="POST" action="{{ url_for('settings.index') }}" class="mb-5">
+                <input type="hidden" name="action" value="get_ssl">
+                <label class="form-label text-muted small">DOMAIN NAME</label>
+                <div class="input-group mb-3">
+                    <input type="text" name="domain" class="form-control" placeholder="panel.example.com" value="{{ settings.panel_domain }}">
+                    <button class="btn btn-glass">GET SSL CERT</button>
+                </div>
+                <small class="text-white-50"><i class="fas fa-info-circle"></i> Requires Port 80 to be open.</small>
+            </form>
+
+            <hr class="border-secondary my-4">
+
+            <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#keyRotationModal">
+                <i class="fas fa-key me-2"></i> ROTATE SYSTEM KEYS & PASSWORD
+            </button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
