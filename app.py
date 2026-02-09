@@ -1,78 +1,69 @@
 import os
 import sys
 from flask import Flask, render_template, redirect, url_for, request, session, abort
-from database.models import db, Admin, PanelSettings , Inbound
+# ایمپورت مدل Inbound ضروری است
+from database.models import db, Admin, PanelSettings, Inbound
 
-# وارد کردن بلوپرینت‌ها (ماژول‌های جداگانه)
+# وارد کردن بلوپرینت‌ها
 from blueprints.auth import auth_bp
 from blueprints.settings import settings_bp
 from blueprints.cores import cores_bp
 from blueprints.logs import logs_bp
+
 def create_app():
-    # 1. تنظیمات اولیه اپلیکیشن
+    # 1. تنظیمات اولیه
     app = Flask(__name__)
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'ALAMOR_SLYTHERIN_SUPER_SECRET_2026')
     
-    # کلید سشن (در محیط عملیاتی بهتر است از فایل خوانده شود)
-    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'ALAMOR_SLYTHERIN_SUPER_SECRET_KEY_2026')
-    
-    # تنظیمات دیتابیس
     basedir = os.path.abspath(os.path.dirname(__file__))
     db_path = os.path.join(basedir, 'database', 'alamor.db')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # راه‌اندازی دیتابیس
     db.init_app(app)
 
-    # 2. ثبت ماژول‌ها (Blueprints)
+    # 2. ثبت ماژول‌ها
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(settings_bp, url_prefix='/settings')
     app.register_blueprint(cores_bp, url_prefix='/core')
     app.register_blueprint(logs_bp, url_prefix='/logs')
 
-    # 3. ایجاد جداول دیتابیس در اولین اجرا
+    # 3. ایجاد دیتابیس در صورت نبودن
     with app.app_context():
         if not os.path.exists(os.path.join(basedir, 'database')):
             os.makedirs(os.path.join(basedir, 'database'))
         db.create_all()
 
-    # 4. سیستم امنیتی مرکزی (Middleware)
+    # 4. گارد امنیتی
     @app.before_request
     def security_guard():
-        # دسترسی به فایل‌های استاتیک (CSS/JS) همیشه آزاد است
         if request.endpoint and 'static' in request.endpoint:
             return
 
-        # گام اول: بررسی نصب اولیه (آیا ادمین وجود دارد؟)
+        # بررسی نصب بودن
         if not Admin.query.first():
             if request.endpoint != 'auth.setup':
                 return redirect(url_for('auth.setup'))
             return
 
-        # گام دوم: بررسی لاگین بودن کاربر
+        # بررسی لاگین بودن
         if 'admin_id' not in session:
-            # اگر کاربر لاگین نیست و نمی‌خواهد لاگین کند، ریدایرکت شود
             if request.endpoint not in ['auth.login', 'auth.setup']:
                 return redirect(url_for('auth.login'))
-        
-        # گام سوم: بررسی مسیر مخفی (Secret Path)
-        # فقط اگر کاربر لاگین نباشد، مسیر مخفی چک می‌شود تا پنل لو نرود
-        if 'admin_id' not in session and request.endpoint == 'auth.login':
-            settings = PanelSettings.query.first()
-            if settings and settings.secret_path and settings.secret_path != "/":
-                # چک کردن اینکه آیا URL با مسیر مخفی شروع شده؟
-                # مثال: /my-secret/auth/login
-                # این بخش نیازمند کانفیگ دقیق Nginx یا هندلینگ خاص در روت است.
-                # برای سادگی در نسخه Flask-only، می‌توانیم یک پارامتر چک کنیم یا مسیر را سخت‌گیرانه کنیم.
-                pass 
 
-    # 5. مسیر اصلی داشبورد
+    # 5. صفحه اصلی (داشبورد) - اصلاح شده
     @app.route('/')
     def index():
-        inbounds = Inbound.query.all()
-        return render_template('index.html')
+        # --- تغییر مهم: خواندن لیست کانفیگ‌ها از دیتابیس ---
+        try:
+            # دریافت همه اینباندها (جدیدترین‌ها اول)
+            inbounds = Inbound.query.order_by(Inbound.id.desc()).all()
+        except:
+            inbounds = []
+            
+        # ارسال لیست به قالب HTML
+        return render_template('index.html', inbounds=inbounds)
 
-    # هندلینگ ارور 404
     @app.errorhandler(404)
     def page_not_found(e):
         return render_template('404.html'), 404
@@ -80,37 +71,28 @@ def create_app():
     return app
 
 if __name__ == '__main__':
-    # ساخت اپلیکیشن
     app = create_app()
+    
+    # نصب خودکار هسته Xray هنگام اجرا
     from core_manager.setup_cores import CoreInstaller
     try:
         CoreInstaller.setup_environment()
     except Exception as e:
-        print(f"Warning: Core setup failed: {e}")
-    # خواندن تنظیمات پورت و SSL از دیتابیس
+        print(f"Core Setup Warning: {e}")
+
+    # لود تنظیمات SSL و پورت
     with app.app_context():
         try:
             settings = PanelSettings.query.first()
-            
-            # تنظیمات پیش‌فرض اگر دیتابیس خالی بود
             port = settings.server_port if settings and settings.server_port else 5000
-            cert_path = settings.ssl_cert_path if settings and settings.ssl_cert_path else None
-            key_path = settings.ssl_key_path if settings and settings.ssl_key_path else None
-            
-        except Exception as e:
-            print(f"Warning: Could not load settings from DB. Using defaults. {e}")
+            cert = settings.ssl_cert_path if settings and settings.ssl_cert_path else None
+            key = settings.ssl_key_path if settings and settings.ssl_key_path else None
+        except:
             port = 5000
-            cert_path = None
-            key_path = None
+            cert = None
+            key = None
 
-    # بررسی وجود فایل‌های SSL
-    ssl_context = None
-    if cert_path and key_path and os.path.exists(cert_path) and os.path.exists(key_path):
-        print(f"🔒 Secure Mode Enabled: Running on Port {port} with SSL.")
-        ssl_context = (cert_path, key_path)
-    else:
-        print(f"⚠️  Insecure Mode: Running on Port {port} (No SSL).")
-
-    # اجرای سرور
-    # نکته: host='0.0.0.0' یعنی پنل روی تمام آی‌پی‌های سرور در دسترس است
+    ssl_context = (cert, key) if cert and key and os.path.exists(cert) else None
+    
+    print(f"🚀 AlamorPanel Running on Port {port}")
     app.run(host='0.0.0.0', port=port, ssl_context=ssl_context, debug=True)
