@@ -4,28 +4,24 @@ import os
 
 def create_app():
     app = Flask(__name__)
-    
-    # تنظیمات دیتابیس
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database', 'alamor.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
 
-    # ساخت دیتابیس در اولین اجرا
     with app.app_context():
         if not os.path.exists('database'):
             os.makedirs('database')
         db.create_all()
-
+    
     @app.route('/')
     def index():
-    # فرستادن لیست اینباندها به صفحه برای جلوگیری از خالی بودن
-        return render_template('index.html', inbounds=[])
+        # حتماً نام فایل را با فایلی که در templates داری یکی کن
+        return render_template('index.html')
 
+    return app  # این خط حیاتی است و در کد شما جا افتاده بود
 
-# در انتهای فایل app.py
 if __name__ == '__main__':
     app = create_app()
-    # اجرای مستقیم روی پورت 5000 با قابلیت Auto-Reload
     app.run(host='0.0.0.0', port=5000, debug=True)
