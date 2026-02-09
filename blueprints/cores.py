@@ -64,3 +64,20 @@ def add_inbound():
         
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+    
+
+@cores_bp.route('/delete-inbound/<int:id>', methods=['POST'])
+def delete_inbound(id):
+    """حذف اینباند از دیتابیس"""
+    try:
+        inbound = Inbound.query.get(id)
+        if not inbound:
+            return jsonify({"status": "error", "message": "Inbound not found"})
+            
+        db.session.delete(inbound)
+        db.session.commit()
+        
+        return jsonify({"status": "success", "message": "Inbound deleted. Please Restart Core to apply changes."})
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})

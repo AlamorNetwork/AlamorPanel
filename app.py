@@ -1,7 +1,7 @@
 import os
 import sys
 from flask import Flask, render_template, redirect, url_for, request, session, abort
-from database.models import db, Admin, PanelSettings
+from database.models import db, Admin, PanelSettings , Inbound
 
 # وارد کردن بلوپرینت‌ها (ماژول‌های جداگانه)
 from blueprints.auth import auth_bp
@@ -69,6 +69,7 @@ def create_app():
     # 5. مسیر اصلی داشبورد
     @app.route('/')
     def index():
+        inbounds = Inbound.query.all()
         return render_template('index.html')
 
     # هندلینگ ارور 404

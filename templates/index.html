@@ -1,44 +1,85 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row mb-5 animate__animated animate__fadeIn">
-    <div class="col-12 d-flex justify-content-between align-items-center glass-card p-4">
+<div class="row mb-4 animate__animated animate__fadeIn">
+    <div class="col-12 d-flex justify-content-between align-items-center glass-card p-4 border-primary-neon-hover">
         <div>
-            <h2 class="fw-bold text-white mb-0 ls-2">XRAY <span class="text-primary-neon">CORE</span></h2>
-            <p class="text-white-50 small mb-0 font-monospace">Neural Configuration Lab</p>
+            <h2 class="fw-bold text-white mb-0 ls-2">XRAY <span class="text-primary-neon">DASHBOARD</span></h2>
+            <p class="text-white-50 small mb-0 font-monospace">Active Nodes Monitor</p>
         </div>
-        <button class="btn btn-glass px-5" data-bs-toggle="modal" data-bs-target="#xrayModal">
-            <i class="fas fa-plus me-2"></i>ADD INBOUND
+        <button class="btn btn-glass px-4" data-bs-toggle="modal" data-bs-target="#xrayModal">
+            <i class="fas fa-plus me-2"></i>CREATE NEW
         </button>
     </div>
 </div>
 
 <div class="glass-card p-0 overflow-hidden">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0" style="background: transparent;">
         <thead class="bg-black bg-opacity-50">
             <tr>
-                <th class="ps-4 text-primary-neon">REMARK</th>
-                <th>PORT</th>
-                <th>PROTOCOL</th>
-                <th class="text-end pe-4">ACTIONS</th>
+                <th class="ps-4 text-primary-neon py-3">REMARK</th>
+                <th class="py-3">PROTOCOL</th>
+                <th class="py-3">PORT</th>
+                <th class="py-3">TRAFFIC</th>
+                <th class="text-end pe-4 py-3">ACTIONS</th>
             </tr>
         </thead>
         <tbody class="text-white">
-            <tr class="align-middle">
-                <td class="ps-4">Slytherin-Node</td>
-                <td class="font-monospace text-primary-neon">443</td>
-                <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">VLESS</span></td>
+            {% for inbound in inbounds %}
+            <tr class="align-middle border-secondary border-opacity-10">
+                <td class="ps-4 fw-bold">{{ inbound.remark }}</td>
+                <td>
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                        {{ inbound.protocol|upper }}
+                    </span>
+                </td>
+                <td class="font-monospace text-warning">{{ inbound.port }}</td>
+                <td class="small text-white-50">
+                    <i class="fas fa-arrow-up text-success me-1"></i> 0 GB
+                    <i class="fas fa-arrow-down text-danger ms-2 me-1"></i> 0 GB
+                </td>
                 <td class="text-end pe-4">
-                    <button class="btn btn-icon-glow btn-monitor me-2" 
-                            onclick="showQR('vless://UUID@IP:PORT?security=tls&type=tcp&sni=domain#Name')">
+                    <button class="btn btn-icon-glow btn-monitor me-1" 
+                            onclick="showQR('vless://UUID@IP:{{ inbound.port }}?security=none#{{ inbound.remark }}')">
                         <i class="fas fa-qrcode"></i>
                     </button>
-                    <button class="btn btn-icon-glow btn-delete"><i class="fas fa-trash"></i></button>
+                    
+                    <button class="btn btn-icon-glow btn-delete text-danger-neon" onclick="deleteInbound({{ inbound.id }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center py-5 text-muted">
+                    <i class="fas fa-ghost fa-3x mb-3 opacity-50"></i><br>
+                    No Inbounds Found. Create one!
+                </td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>
 
 {% include 'modals/xray_modal.html' %}
+
+<script>
+async function deleteInbound(id) {
+    if (confirm("⚠ WARNING: Are you sure you want to delete this inbound?")) {
+        try {
+            const response = await fetch(`/core/delete-inbound/${id}`, { method: 'POST' });
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                // ریلود صفحه برای حذف سطر
+                window.location.reload();
+            } else {
+                alert("Error: " + result.message);
+            }
+        } catch (error) {
+            alert("Network Error: " + error);
+        }
+    }
+}
+</script>
 {% endblock %}
