@@ -20,9 +20,9 @@ def create_app():
 
     @app.route('/')
     def index():
-        return render_template('inbounds.html')
+    # فرستادن لیست اینباندها به صفحه برای جلوگیری از خالی بودن
+        return render_template('index.html', inbounds=[])
 
-    return app
 
 # در انتهای فایل app.py
 if __name__ == '__main__':
