@@ -1,0 +1,50 @@
+:root {
+    --slytherin-primary: #2ecc71;
+    --slytherin-dark: #064e3b;
+    --cyber-black: #020617;
+    --neon-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+}
+
+body {
+    background: radial-gradient(circle at top right, #064e3b 0%, #020617 40%);
+    background-attachment: fixed;
+    color: #e2e8f0;
+}
+
+/* افکت شیشه‌ای پیشرفته */
+.glass-panel {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+/* ورودی‌های سایبرپانک */
+.cyber-input {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(46, 204, 113, 0.3) !important;
+    color: #2ecc71 !important;
+    transition: all 0.3s ease;
+}
+
+.cyber-input:focus {
+    border-color: #2ecc71 !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+    outline: none;
+}
+
+/* انیمیشن درخشش نئون */
+@keyframes neon-pulse {
+    0% { box-shadow: 0 0 5px #2ecc71; }
+    50% { box-shadow: 0 0 20px #2ecc71; }
+    100% { box-shadow: 0 0 5px #2ecc71; }
+}
+
+.neon-active {
+    animation: neon-pulse 2s infinite;
+}
+
+/* اسکرول‌بار سفارشی */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--cyber-black); }
+::-webkit-scrollbar-thumb { background: var(--slytherin-primary); border-radius: 10px; }
