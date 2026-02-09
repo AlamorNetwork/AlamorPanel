@@ -5,6 +5,7 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/setup', methods=['GET', 'POST'])
 def setup():
+    # اگر ادمین وجود دارد، نیازی به نصب نیست
     if Admin.query.first():
         return redirect(url_for('auth.login'))
         
@@ -12,6 +13,7 @@ def setup():
         username = request.form.get('username')
         password = request.form.get('password')
         
+        # ساخت ادمین جدید
         new_admin = Admin(username=username)
         new_admin.set_password(password)
         db.session.add(new_admin)
@@ -28,9 +30,12 @@ def login():
         password = request.form.get('password')
         
         user = Admin.query.filter_by(username=username).first()
+        
+        # بررسی صحت پسورد
         if user and user.check_password(password):
             session['admin_id'] = user.id
-            return redirect(url_for('dashboard.index'))
+            # --- اصلاح مهم: تغییر مسیر به index ---
+            return redirect(url_for('index'))
             
         return render_template('login.html', error="Invalid Credentials")
         
