@@ -42,6 +42,8 @@ class TrafficLog(db.Model):
     last_update = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
 class Inbound(db.Model):
+    __tablename__ = 'inbound'
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     enable = db.Column(db.Boolean, default=True)
     remark = db.Column(db.String(100))
