@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center animate__animated animate__fadeIn">
+    <div class="col-lg-10">
+        
+        <div class="glass-card p-4 mb-4 d-flex justify-content-between align-items-center border-primary-neon-hover">
+            <div>
+                <h2 class="text-white mb-0 ls-2">CORE <span class="text-primary-neon">MANAGER</span></h2>
+                <p class="text-white-50 font-monospace mb-0 small">Xray-core v1.8.x Status Control</p>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-success bg-opacity-25 text-success border border-success me-3 p-2">
+                    <i class="fas fa-check-circle me-1"></i> ACTIVE
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="glass-card p-5 h-100 border-info-neon-hover text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-radiation fa-4x text-primary-neon"></i>
+                    </div>
+                    <h4 class="text-white mb-3">Xray Service</h4>
+                    <p class="text-muted small mb-4">
+                        Apply changes from database to config.json and restart the service.
+                    </p>
+                    <button id="btnRestart" class="btn btn-glass w-100 py-3" onclick="performAction('restart')">
+                        <i class="fas fa-sync-alt me-2"></i> APPLY & RESTART
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="glass-card p-5 h-100 border-warning-neon-hover text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-cloud-download-alt fa-4x text-warning"></i>
+                    </div>
+                    <h4 class="text-white mb-3">Core Binaries</h4>
+                    <p class="text-muted small mb-4">
+                        Check for updates and download latest Xray-core from GitHub.
+                    </p>
+                    <button id="btnUpdate" class="btn btn-glass w-100 py-3 border-warning text-warning" onclick="performAction('install-core')">
+                        <i class="fas fa-download me-2"></i> UPDATE CORE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card p-4 mt-4">
+            <h6 class="text-white-50 font-monospace border-bottom border-secondary pb-2 mb-3">
+                <i class="fas fa-terminal me-2"></i>OPERATION LOG
+            </h6>
+            <div id="consoleOutput" class="font-monospace small text-success-neon" style="min-height: 100px;">
+                Waiting for command...
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+async function performAction(action) {
+    const output = document.getElementById('consoleOutput');
+    const btn = action === 'restart' ? document.getElementById('btnRestart') : document.getElementById('btnUpdate');
+    
+    // UI Loading State
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSING...';
+    output.innerHTML = `<span class="text-warning">➜ Executing ${action}...</span>`;
+
+    try {
+        const response = await fetch(`/core/${action}`, { method: 'POST' });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            output.innerHTML += `<br><span class="text-success">✔ ${result.message}</span>`;
+        } else {
+            output.innerHTML += `<br><span class="text-danger">✘ ERROR: ${result.message}</span>`;
+        }
+    } catch (error) {
+        output.innerHTML += `<br><span class="text-danger">✘ NETWORK ERROR: ${error}</span>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+</script>
+{% endblock %}
