@@ -24,6 +24,8 @@ def create_app():
 
     return app
 
+# در انتهای فایل app.py
 if __name__ == '__main__':
     app = create_app()
+    # اجرای مستقیم روی پورت 5000 با قابلیت Auto-Reload
     app.run(host='0.0.0.0', port=5000, debug=True)

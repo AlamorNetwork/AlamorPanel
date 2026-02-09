@@ -45,19 +45,20 @@ class Inbound(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     enable = db.Column(db.Boolean, default=True)
     remark = db.Column(db.String(100))
-    protocol = db.Column(db.String(20)) # vless, vmess, etc.
-    port = db.Column(db.Integer, unique=True)
+    protocol = db.Column(db.String(20))
     listen = db.Column(db.String(50), default="0.0.0.0")
+    port = db.Column(db.Integer, unique=True)
     
-    total = db.Column(db.BigInteger, default=0) # Total Flow
-    expiry_time = db.Column(db.BigInteger, default=0) # Duration
+    # Traffic & Time
+    total_flow = db.Column(db.BigInteger, default=0) # 0 means unlimited
+    used_flow = db.Column(db.BigInteger, default=0)
+    expiry_time = db.Column(db.BigInteger, default=0)
     
-    # تمام تنظیمات خاص پروتکل (Reality, TLS, Authentication)
-    settings = db.Column(db.Text) 
+    # JSON Fields for complex settings
+    auth_settings = db.Column(db.Text)      # Authentication, Decryption, Encryption
+    fallback_settings = db.Column(db.Text)  # Fallbacks list
+    stream_settings = db.Column(db.Text)    # Transmission, Sockopt, TCP settings
     
-    # تمام تنظیمات انتقال (Transmission, TCP, Reality advanced)
-    stream_settings = db.Column(db.Text)
-    
-    # تنظیمات سیستمی (Sniffing, Sockopt, TProxy)
-    sniffing = db.Column(db.Text)
-    sockopt = db.Column(db.Text)
+    # Subscription & API
+    sub_id = db.Column(db.String(50), unique=True) # برای لینک ساب اختصاصی
+    api_enabled = db.Column(db.Boolean, default=True)

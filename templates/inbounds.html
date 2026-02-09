@@ -1,116 +1,101 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto space-y-8 pb-20">
-    
-    <header class="flex justify-between items-end border-b border-green-500/20 pb-4">
+<div class="max-w-7xl mx-auto p-4 pb-20">
+    <div class="flex justify-between items-center mb-8">
         <div>
-            <h2 class="text-4xl font-bold text-white tracking-tight">پیکربندی اینباند</h2>
-            <p class="text-green-500/60 text-sm mt-2">ALAMOR MULTI-CORE ENGINE v1.2</p>
+            <h1 class="text-3xl font-black text-white italic">CONFIG <span class="text-green-500">LAB</span></h1>
+            <p class="text-xs text-gray-500 uppercase tracking-widest">Mastering Protocols: Xray & Hysteria</p>
         </div>
-        <div class="flex gap-4">
-            <button class="bg-red-500/10 border border-red-500/50 text-red-500 px-6 py-2 rounded-lg hover:bg-red-500 hover:text-white transition">لغو</button>
-            <button class="bg-green-600 border border-green-400 text-white px-8 py-2 rounded-lg hover:shadow-[0_0_20px_#2ecc71] transition font-bold">ذخیره و اجرا</button>
-        </div>
-    </header>
+        <button onclick="saveInbound()" class="bg-green-600 hover:bg-green-500 text-black font-bold px-10 py-3 rounded-xl shadow-[0_0_20px_rgba(46,204,113,0.4)] transition-all">
+            BUILD CONFIG
+        </button>
+    </div>
 
     <div class="grid grid-cols-12 gap-8">
-        
-        <div class="col-span-12 lg:col-span-8 space-y-6">
+        <div class="col-span-12 lg:col-span-8 space-y-8">
             
-            <section class="glass-panel p-6 rounded-3xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl"></div>
-                <h3 class="text-xl font-bold mb-6 flex items-center"><i class="fas fa-info-circle ml-3 text-green-500"></i> تنظیمات پایه</h3>
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-xs text-gray-400 mr-2">نام اینباند (Remark)</label>
-                        <input type="text" class="w-full cyber-input rounded-xl p-3" placeholder="Slytherin-User-01">
+            <div class="glass-card p-8">
+                <h2 class="section-title">Base Parameters</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="flex items-center gap-3 cyber-input">
+                        <input type="checkbox" id="enabled" checked class="w-5 h-5 accent-green-500">
+                        <label for="enabled">Enabled</label>
                     </div>
-                    <div class="space-y-2">
-                        <label class="text-xs text-gray-400 mr-2">پورت</label>
-                        <input type="number" class="w-full cyber-input rounded-xl p-3" placeholder="443">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs text-gray-400 mr-2">پروتکل</label>
-                        <select class="w-full cyber-input rounded-xl p-3">
-                            <option>VLESS</option>
-                            <option>VMess</option>
-                            <option>Trojan</option>
-                            <option>Hysteria 2</option>
-                        </select>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs text-gray-400 mr-2">Listen IP</label>
-                        <input type="text" class="w-full cyber-input rounded-xl p-3" value="0.0.0.0">
+                    <input type="text" id="remark" placeholder="Remark" class="cyber-input">
+                    <select id="protocol" class="cyber-input">
+                        <option value="vless">VLESS</option>
+                        <option value="vmess">VMess</option>
+                        <option value="trojan">Trojan</option>
+                        <option value="hysteria2">Hysteria 2</option>
+                    </select>
+                    <input type="text" id="listen" placeholder="Listen IP (0.0.0.0)" class="cyber-input">
+                    <input type="number" id="port" placeholder="Port" class="cyber-input">
+                    <input type="number" id="total_flow" placeholder="Total Flow (GB)" class="cyber-input">
+                </div>
+            </div>
+
+            <div class="glass-card p-8">
+                <h2 class="section-title">Authentication & Decryption</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <input type="text" id="uuid" placeholder="UUID / Password" class="cyber-input">
+                    <select id="decryption" class="cyber-input">
+                        <option value="none">Decryption: None</option>
+                        <option value="aes-128-gcm">AES-128-GCM</option>
+                        <option value="chacha20-poly1305">Chacha20-Poly1305</option>
+                    </select>
+                    <select id="security" onchange="toggleSecurityFields()" class="cyber-input">
+                        <option value="none">Security: None</option>
+                        <option value="tls">TLS</option>
+                        <option value="reality">REALITY</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="reality-sect" class="glass-card p-8 hidden border-green-500/50">
+                <h2 class="section-title text-green-400">Reality (Vision/SpiderX)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" placeholder="Target (e.g. microsoft.com:443)" class="cyber-input">
+                    <input type="text" placeholder="SNI (Comma separated)" class="cyber-input">
+                    <input type="text" placeholder="Private Key" class="cyber-input">
+                    <input type="text" placeholder="Short IDs" class="cyber-input">
+                    <input type="text" placeholder="SpiderX Path" class="cyber-input">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" placeholder="Min Client Ver" class="cyber-input">
+                        <input type="number" placeholder="Max Client Ver" class="cyber-input">
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <section class="glass-panel rounded-3xl overflow-hidden">
-                <button onclick="toggleSection('reality-body')" class="w-full p-6 flex justify-between items-center hover:bg-green-500/5 transition">
-                    <h3 class="text-xl font-bold flex items-center"><i class="fas fa-vr-cardboard ml-3 text-green-400"></i> تنظیمات REALITY</h3>
-                    <i class="fas fa-chevron-down text-green-500"></i>
-                </button>
-                <div id="reality-body" class="p-6 pt-0 grid grid-cols-2 gap-6 hidden border-t border-green-500/10">
-                    <div class="col-span-2 grid grid-cols-3 gap-4">
-                        <input type="text" class="cyber-input rounded-lg p-2 text-sm" placeholder="Dest (Target)">
-                        <input type="text" class="cyber-input rounded-lg p-2 text-sm" placeholder="SNI">
-                        <input type="number" class="cyber-input rounded-lg p-2 text-sm" placeholder="Max Time Diff">
-                    </div>
-                    <input type="text" class="cyber-input rounded-lg p-2 text-sm" placeholder="Private Key">
-                    <input type="text" class="cyber-input rounded-lg p-2 text-sm" placeholder="Public Key">
-                    <div class="col-span-2">
-                        <input type="text" class="w-full cyber-input rounded-lg p-2 text-sm" placeholder="Short IDs (e.g. 01,02,ab,cd)">
-                    </div>
+            <div class="glass-card p-8">
+                <h2 class="section-title text-purple-400">Transmission & Sockopt</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <input type="text" placeholder="TCP Congestion (bbr/cubic)" class="cyber-input">
+                    <input type="number" placeholder="TCP Window Clamp" class="cyber-input">
+                    <input type="number" placeholder="TCP User Timeout" class="cyber-input">
                 </div>
-            </section>
-
-            <section class="glass-panel rounded-3xl overflow-hidden">
-                <button onclick="toggleSection('tcp-body')" class="w-full p-6 flex justify-between items-center hover:bg-green-500/5 transition">
-                    <h3 class="text-xl font-bold flex items-center"><i class="fas fa-network-wired ml-3 text-blue-400"></i> تنظیمات پیشرفته شبکه & Sockopt</h3>
-                    <i class="fas fa-chevron-down text-blue-500"></i>
-                </button>
-                <div id="tcp-body" class="p-6 pt-0 space-y-6 hidden border-t border-green-500/10">
-                    <div class="grid grid-cols-3 gap-4">
-                        <input type="text" class="cyber-input rounded-lg p-2 text-sm" placeholder="TCP Congestion">
-                        <input type="number" class="cyber-input rounded-lg p-2 text-sm" placeholder="TCP Max Seg">
-                        <input type="number" class="cyber-input rounded-lg p-2 text-sm" placeholder="TCP Window Clamp">
-                    </div>
-                    <div class="flex flex-wrap gap-6 p-4 bg-black/30 rounded-2xl">
-                        <label class="flex items-center space-x-2 space-x-reverse cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 accent-green-500"> <span class="text-sm">TProxy</span>
-                        </label>
-                        <label class="flex items-center space-x-2 space-x-reverse cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 accent-green-500"> <span class="text-sm">TCP Fast Open</span>
-                        </label>
-                        <label class="flex items-center space-x-2 space-x-reverse cursor-pointer">
-                            <input type="checkbox" class="w-4 h-4 accent-green-500"> <span class="text-sm">V6 Only</span>
-                        </label>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div class="col-span-12 lg:col-span-4 space-y-6">
-            <div class="glass-panel p-6 rounded-3xl border-r-4 border-green-500">
-                <h4 class="text-lg font-bold mb-4">محدودیت ترافیک</h4>
-                <div class="space-y-4">
-                    <input type="number" class="w-full cyber-input rounded-xl p-3" placeholder="Total Flow (GB)">
-                    <input type="date" class="w-full cyber-input rounded-xl p-3 text-sm">
-                    <div class="bg-green-500/10 p-4 rounded-2xl border border-green-500/20">
-                        <p class="text-xs text-green-400">نکته: برای نامحدود گذاشتن، مقدار را 0 وارد کنید.</p>
-                    </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> TProxy</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> TCP Fast Open</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> Multipath TCP</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> Penetrate</label>
                 </div>
             </div>
         </div>
 
+        <div class="col-span-12 lg:col-span-4 space-y-6">
+            <div class="glass-card p-6 bg-green-500/5">
+                <h3 class="font-bold mb-4 text-sm uppercase">Quick Actions</h3>
+                <button class="w-full mb-3 bg-white/5 p-3 rounded-xl hover:bg-green-500/20 transition text-left text-sm">
+                    <i class="fas fa-magic mr-2"></i> Auto-Generate UUID
+                </button>
+                <button class="w-full bg-white/5 p-3 rounded-xl hover:bg-blue-500/20 transition text-left text-sm">
+                    <i class="fas fa-key mr-2"></i> Fetch Reality Keys
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
-    function toggleSection(id) {
-        const el = document.getElementById(id);
-        el.classList.toggle('hidden');
-    }
-</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}

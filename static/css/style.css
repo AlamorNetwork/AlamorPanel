@@ -1,50 +1,61 @@
 :root {
-    --slytherin-primary: #2ecc71;
-    --slytherin-dark: #064e3b;
-    --cyber-black: #020617;
-    --neon-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+    --slytherin: #2ecc71;
+    --dark-bg: #05070a;
+    --glass: rgba(15, 23, 42, 0.7);
+    --neon-glow: 0 0 15px rgba(46, 204, 113, 0.4);
 }
 
 body {
-    background: radial-gradient(circle at top right, #064e3b 0%, #020617 40%);
-    background-attachment: fixed;
-    color: #e2e8f0;
+    background-color: var(--dark-bg);
+    background-image: radial-gradient(circle at 10% 20%, rgba(46, 204, 113, 0.05) 0%, transparent 40%);
+    color: #cbd5e1;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
 }
 
-/* افکت شیشه‌ای پیشرفته */
-.glass-panel {
-    background: rgba(15, 23, 42, 0.6);
+.glass-card {
+    background: var(--glass);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(46, 204, 113, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-}
-
-/* ورودی‌های سایبرپانک */
-.cyber-input {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid rgba(46, 204, 113, 0.3) !important;
-    color: #2ecc71 !important;
+    border: 1px solid rgba(46, 204, 113, 0.15);
+    border-radius: 1.5rem;
     transition: all 0.3s ease;
 }
 
-.cyber-input:focus {
-    border-color: #2ecc71 !important;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+.glass-card:hover {
+    border-color: var(--slytherin);
+    box-shadow: var(--neon-glow);
+}
+
+.cyber-input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    color: #fff;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
     outline: none;
+    transition: 0.3s;
 }
 
-/* انیمیشن درخشش نئون */
-@keyframes neon-pulse {
-    0% { box-shadow: 0 0 5px #2ecc71; }
-    50% { box-shadow: 0 0 20px #2ecc71; }
-    100% { box-shadow: 0 0 5px #2ecc71; }
+.cyber-input:focus {
+    border-color: var(--slytherin);
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
 }
 
-.neon-active {
-    animation: neon-pulse 2s infinite;
+.section-title {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--slytherin);
+    border-right: 4px solid var(--slytherin);
+    padding-right: 15px;
+    margin-bottom: 20px;
 }
 
-/* اسکرول‌بار سفارشی */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: var(--cyber-black); }
-::-webkit-scrollbar-thumb { background: var(--slytherin-primary); border-radius: 10px; }
+/* Tab Animation */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
