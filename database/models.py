@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import json
 
 db = SQLAlchemy()
 
@@ -43,35 +44,56 @@ class TrafficLog(db.Model):
     last_update = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
 class Inbound(db.Model):
-    __tablename__ = 'inbound'
-    __table_args__ = {'extend_existing': True}
-
+    """
+    هسته اصلی: مدل اینباند که تمام پروتکل‌های Xray را پشتیبانی می‌کند
+    """
     id = db.Column(db.Integer, primary_key=True)
+    
+    # --- فیلدهای مدیریتی پنل (قابل جستجو) ---
     enable = db.Column(db.Boolean, default=True)
-    remark = db.Column(db.String(100))
-    protocol = db.Column(db.String(20))
+    remark = db.Column(db.String(100))           # نام کانفیگ
+    port = db.Column(db.Integer, unique=True, nullable=False)
+    protocol = db.Column(db.String(50), nullable=False) # vless, vmess, trojan, wireguard, etc.
     listen = db.Column(db.String(50), default="0.0.0.0")
-    port = db.Column(db.Integer, unique=True)
     
-    # Traffic
-    total = db.Column(db.BigInteger, default=0) # Total Flow
-    up = db.Column(db.BigInteger, default=0)
-    down = db.Column(db.BigInteger, default=0)
-    expiry_time = db.Column(db.BigInteger, default=0)
+    # --- آمار و محدودیت‌ها ---
+    total = db.Column(db.BigInteger, default=0)  # حجم کل مجاز (0 = نامحدود)
+    up = db.Column(db.BigInteger, default=0)     # آپلود مصرفی
+    down = db.Column(db.BigInteger, default=0)   # دانلود مصرفی
+    expiry_time = db.Column(db.BigInteger, default=0) # زمان انقضا (Timestamp)
     
-    # Settings (JSON string)
-    # شامل: Authentication, Fallbacks, Proxy Protocol
-    settings = db.Column(db.Text) 
-    
-    # Stream Settings (JSON string)
-    # شامل: Transmission, Sockopt, TLS, Reality, TCP settings
-    stream_settings = db.Column(db.Text)
-    
-    # Sniffing (JSON string)
-    sniffing = db.Column(db.Text)
+    # --- شناسه داخلی Xray ---
+    # تگ برای روتینگ و آمارگیری در هسته Xray استفاده می‌شود
+    tag = db.Column(db.String(100), unique=True) 
 
-    def __repr__(self):
-        return f'<Inbound {self.remark}>'
+    # --- فیلدهای پیکربندی Xray (JSON TEXT) ---
+    # استفاده از Text برای ذخیره کامل ساختار جیسون طبق داکیومنت Xray
+    
+    # شامل: clients, users, fallbacks, decryption, etc.
+    settings = db.Column(db.Text, default="{}")
+    
+    # شامل: network (tcp, ws, grpc, xhttp), security (tls, reality), sockopt (tproxy, mark)
+    stream_settings = db.Column(db.Text, default="{}")
+    
+    # شامل: enabled, destOverride, routeOnly
+    sniffing = db.Column(db.Text, default="{}")
+    
+    # شامل: strategy, refresh, concurrency (allocation)
+    allocate = db.Column(db.Text, default="{}")
+
+    def get_settings(self):
+        """بازگرداندن تنظیمات به صورت دیکشنری پایتون"""
+        try:
+            return json.loads(self.settings) if self.settings else {}
+        except:
+            return {}
+
+    def get_stream(self):
+        """بازگرداندن تنظیمات استریم به صورت دیکشنری"""
+        try:
+            return json.loads(self.stream_settings) if self.stream_settings else {}
+        except:
+            return {}
     
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -88,7 +110,7 @@ class PanelSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     server_port = db.Column(db.Integer, default=5000)
     panel_domain = db.Column(db.String(100))
-    secret_path = db.Column(db.String(50), default="/") # e.g., /my-secret-admin
+    secret_path = db.Column(db.String(50), default="/")
     sub_port = db.Column(db.Integer, default=2096)
     ssl_cert_path = db.Column(db.String(200))
     ssl_key_path = db.Column(db.String(200))
