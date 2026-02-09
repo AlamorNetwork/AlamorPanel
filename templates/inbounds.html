@@ -1,114 +1,92 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto p-4 pb-20">
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-black text-white italic">CONFIG <span class="text-green-500">LAB</span></h1>
-            <p class="text-xs text-gray-500 uppercase tracking-widest">Mastering Protocols: Xray & Hysteria</p>
-        </div>
-        <button onclick="saveInbound()" class="bg-green-600 hover:bg-green-500 text-black font-bold px-10 py-3 rounded-xl shadow-[0_0_20px_rgba(46,204,113,0.4)] transition-all">
-            BUILD CONFIG
-        </button>
+<div class="max-w-7xl mx-auto space-y-6 pb-24">
+    <div class="flex justify-between items-center border-b border-green-500/20 pb-4">
+        <h1 class="text-3xl font-black text-white italic tracking-tighter">ALAMOR <span class="text-green-500">ENGINE</span></h1>
+        <button onclick="collectAllData()" class="bg-green-600 hover:bg-green-400 text-black font-bold px-8 py-2 rounded-full shadow-lg transition-all">DEPLOY CORE</button>
     </div>
 
-    <div class="grid grid-cols-12 gap-8">
-        <div class="col-span-12 lg:col-span-8 space-y-8">
-            
-            <div class="glass-card p-8">
-                <h2 class="section-title">Base Parameters</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="flex items-center gap-3 cyber-input">
-                        <input type="checkbox" id="enabled" checked class="w-5 h-5 accent-green-500">
-                        <label for="enabled">Enabled</label>
-                    </div>
-                    <input type="text" id="remark" placeholder="Remark" class="cyber-input">
-                    <select id="protocol" class="cyber-input">
-                        <option value="vless">VLESS</option>
-                        <option value="vmess">VMess</option>
-                        <option value="trojan">Trojan</option>
-                        <option value="hysteria2">Hysteria 2</option>
-                    </select>
-                    <input type="text" id="listen" placeholder="Listen IP (0.0.0.0)" class="cyber-input">
-                    <input type="number" id="port" placeholder="Port" class="cyber-input">
-                    <input type="number" id="total_flow" placeholder="Total Flow (GB)" class="cyber-input">
-                </div>
-            </div>
+    <div class="glass-card p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="col-span-4 section-title">Basic & Traffic Control</div>
+        <div class="flex items-center gap-2 cyber-input"><input type="checkbox" id="enabled" checked> <span>Enabled</span></div>
+        <input type="text" id="remark" placeholder="Remark" class="cyber-input">
+        <select id="protocol" class="cyber-input">
+            <option value="vless">VLESS</option>
+            <option value="vmess">VMess</option>
+            <option value="trojan">Trojan</option>
+            <option value="shadowsocks">Shadowsocks</option>
+            <option value="hysteria2">Hysteria 2</option>
+        </select>
+        <input type="text" id="listen" placeholder="Listen IP (0.0.0.0)" class="cyber-input">
+        <input type="number" id="port" placeholder="Port" class="cyber-input">
+        <input type="number" id="total_flow" placeholder="Total Flow (GB)" class="cyber-input">
+        <input type="number" id="duration" placeholder="Duration (Days)" class="cyber-input">
+        <select id="traffic_reset" class="cyber-input"><option>No Reset</option><option>Monthly</option></select>
+    </div>
 
-            <div class="glass-card p-8">
-                <h2 class="section-title">Authentication & Decryption</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <input type="text" id="uuid" placeholder="UUID / Password" class="cyber-input">
-                    <select id="decryption" class="cyber-input">
-                        <option value="none">Decryption: None</option>
-                        <option value="aes-128-gcm">AES-128-GCM</option>
-                        <option value="chacha20-poly1305">Chacha20-Poly1305</option>
-                    </select>
-                    <select id="security" onchange="toggleSecurityFields()" class="cyber-input">
-                        <option value="none">Security: None</option>
-                        <option value="tls">TLS</option>
-                        <option value="reality">REALITY</option>
-                    </select>
-                </div>
-            </div>
+    <div class="glass-card p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="col-span-3 section-title text-blue-400">Security & Auth</div>
+        <input type="text" id="uuid" placeholder="UUID / Password" class="cyber-input">
+        <input type="text" id="decryption" placeholder="Decryption (none)" class="cyber-input">
+        <input type="text" id="encryption" placeholder="Encryption (auto)" class="cyber-input">
+    </div>
 
-            <div id="reality-sect" class="glass-card p-8 hidden border-green-500/50">
-                <h2 class="section-title text-green-400">Reality (Vision/SpiderX)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" placeholder="Target (e.g. microsoft.com:443)" class="cyber-input">
-                    <input type="text" placeholder="SNI (Comma separated)" class="cyber-input">
-                    <input type="text" placeholder="Private Key" class="cyber-input">
-                    <input type="text" placeholder="Short IDs" class="cyber-input">
-                    <input type="text" placeholder="SpiderX Path" class="cyber-input">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" placeholder="Min Client Ver" class="cyber-input">
-                        <input type="number" placeholder="Max Client Ver" class="cyber-input">
-                    </div>
-                </div>
-            </div>
+    <div class="glass-card p-6">
+        <div class="section-title text-orange-400">Fallbacks Settings</div>
+        <textarea id="fallbacks" class="cyber-input h-24 font-mono text-xs w-full" placeholder='[{"name": "dest", "port": 80, "path": "/proxy"}]'></textarea>
+    </div>
 
-            <div class="glass-card p-8">
-                <h2 class="section-title text-purple-400">Transmission & Sockopt</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <input type="text" placeholder="TCP Congestion (bbr/cubic)" class="cyber-input">
-                    <input type="number" placeholder="TCP Window Clamp" class="cyber-input">
-                    <input type="number" placeholder="TCP User Timeout" class="cyber-input">
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> TProxy</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> TCP Fast Open</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> Multipath TCP</label>
-                    <label class="flex items-center gap-2"><input type="checkbox" class="accent-purple-500"> Penetrate</label>
-                </div>
-            </div>
+    <div class="glass-card p-6">
+        <div class="section-title text-purple-400">Transmission & Advanced Sockopt</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <input type="text" id="tcp_congestion" placeholder="TCP Congestion (bbr)" class="cyber-input">
+            <input type="number" id="tcp_keep_alive_interval" placeholder="Keep Alive Interval" class="cyber-input">
+            <input type="number" id="tcp_keep_alive_idle" placeholder="Keep Alive Idle" class="cyber-input">
+            <input type="number" id="tcp_max_seg" placeholder="TCP Max Seg" class="cyber-input">
+            <input type="number" id="tcp_user_timeout" placeholder="TCP User Timeout" class="cyber-input">
+            <input type="number" id="tcp_window_clamp" placeholder="TCP Window Clamp" class="cyber-input">
+            <input type="text" id="interface_name" placeholder="Interface Name" class="cyber-input">
+            <input type="number" id="route_mark" placeholder="Route Mark" class="cyber-input">
         </div>
-
-        <div class="col-span-12 lg:col-span-4 space-y-6">
-            <div class="glass-card p-6 bg-green-500/5">
-                <h3 class="font-bold mb-4 text-sm uppercase">Quick Actions</h3>
-                <button class="w-full mb-3 bg-white/5 p-3 rounded-xl hover:bg-green-500/20 transition text-left text-sm">
-                    <i class="fas fa-magic mr-2"></i> Auto-Generate UUID
-                </button>
-                <button class="w-full bg-white/5 p-3 rounded-xl hover:bg-blue-500/20 transition text-left text-sm">
-                    <i class="fas fa-key mr-2"></i> Fetch Reality Keys
-                </button>
-            </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-black/20 p-4 rounded-xl">
+            <label class="flex items-center gap-2"><input type="checkbox" id="tproxy"> TProxy</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="tcp_fast_open"> TCP Fast Open</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="multipath_tcp"> Multipath TCP</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="penetrate"> Penetrate</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="v6_only"> V6 Only</label>
+            <label class="flex items-center gap-2"><input type="checkbox" id="proxy_protocol"> Proxy Protocol</label>
         </div>
     </div>
-</div>
-<div class="glass-card p-8 mt-6">
-    <h2 class="section-title text-orange-400">Advanced Headers & Fallbacks</h2>
-    <div class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <textarea id="fallbacks" placeholder="Fallbacks (JSON Array)" class="cyber-input h-24 text-xs font-mono"></textarea>
-            <textarea id="request_header" placeholder="Request Headers (JSON)" class="cyber-input h-24 text-xs font-mono"></textarea>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input type="text" id="domain_strategy" placeholder="Domain Strategy (AsIs, UseIP...)" class="cyber-input">
-            <input type="text" id="interface_name" placeholder="Interface Name (eth0...)" class="cyber-input">
-        </div>
+
+    <div class="glass-card p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="col-span-2 section-title text-pink-400">HTTP Obfuscation (Request / Response)</div>
+        <textarea id="req_header" class="cyber-input h-20 text-xs" placeholder="Request Headers..."></textarea>
+        <textarea id="res_header" class="cyber-input h-20 text-xs" placeholder="Response Headers..."></textarea>
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+function collectAllData() {
+    const data = {
+        base: {
+            enabled: document.getElementById('enabled').checked,
+            remark: document.getElementById('remark').value,
+            protocol: document.getElementById('protocol').value,
+            port: document.getElementById('port').value,
+            listen: document.getElementById('listen').value,
+            total: document.getElementById('total_flow').value
+        },
+        sockopt: {
+            congestion: document.getElementById('tcp_congestion').value,
+            tproxy: document.getElementById('tproxy').checked,
+            fast_open: document.getElementById('tcp_fast_open').checked
+            // بقیه فیلدها هم به همین صورت اضافه میشن
+        }
+    };
+    console.log("ALAMOR PAYLOAD:", data);
+    alert("Data Captured! Check Console.");
+}
+</script>
 {% endblock %}
