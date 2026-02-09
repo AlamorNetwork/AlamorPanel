@@ -1,207 +1,226 @@
 import json
+import uuid
 import os
-import logging
-from database.models import Inbound
-from core_manager.system_ops import SystemOps
-from core_manager.setup_cores import CoreInstaller
-import subprocess
-# تنظیمات مسیرها
-CONFIG_DIR = "/usr/local/etc/xray"
-CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
-LOG_DIR = "/var/log/xray"
 
-class XrayBuilder:
-    """
-    موتور تبدیل دیتابیس پنل به کانفیگ استاندارد Xray
-    پشتیبانی از: VLESS, VMess, Trojan, SS, WireGuard, Dokodemo
-    پشتیبانی از: Reality, TLS, XHTTP, GRPC, WS, TCP
-    """
+class XrayConfigBuilder:
     
     @staticmethod
-    def apply_config():
+    def build_inbound(data):
         """
-        متد اصلی فراخوانی: ساخت کانفیگ، ذخیره و ریستارت سرویس
+        تبدیل داده‌های فرم به ساختار استاندارد Inbound مطابق xray.md
         """
-        try:
-            # 1. نصب و بررسی سرویس (این خط مشکل Unit not found را حل میکند)
-            CoreInstaller.setup_environment()
-            
-            # 2. تولید ساختار کامل کانفیگ
-            full_config = XrayBuilder._generate_full_structure()
-            
-            # 3. ذخیره در فایل
-            if not XrayBuilder._write_config_file(full_config):
-                return False, "Failed to write config file."
-            
-            # 4. ریستارت سرویس
-            if SystemOps.restart_core_service("xray"):
-                return True, "Core reloaded successfully."
-            else:
-                # تلاش مجدد برای استارت اگر ریستارت فیل شد
-                subprocess.run(["systemctl", "start", "xray"], check=False)
-                return True, "Service started."
-                
-        except Exception as e:
-            return False, f"Builder Error: {str(e)}"
-    @staticmethod
-    def _generate_full_structure():
-        """ساخت اسکلت اصلی JSON"""
-        # ساختار پایه
-        config = {
-            "log": {
-                "loglevel": "warning",
-                "access": os.path.join(LOG_DIR, "access.log"),
-                "error": os.path.join(LOG_DIR, "error.log")
-            },
-            "api": {
-                "tag": "api",
-                "services": ["HandlerService", "LoggerService", "StatsService"]
-            },
-            "stats": {},
-            "policy": {
-                "levels": {"0": {"statsUserUplink": True, "statsUserDownlink": True}},
-                "system": {"statsInboundUplink": True, "statsInboundDownlink": True}
-            },
-            "inbounds": [],
-            "outbounds": [
-                {"protocol": "freedom", "tag": "direct"},
-                {"protocol": "blackhole", "tag": "block"}
-            ],
-            "routing": {
-                "domainStrategy": "IPIfNonMatch",
-                "rules": [
-                    {"type": "field", "inboundTag": ["api"], "outboundTag": "api"}
-                ]
+        # 1. تنظیمات پایه (Base)
+        protocol = data.get('protocol')
+        port = int(data.get('port', 443))
+        listen = data.get('listen', '0.0.0.0')
+        tag = f"inbound-{port}"
+        
+        inbound = {
+            "tag": tag,
+            "port": port,
+            "listen": listen,
+            "protocol": protocol,
+            "settings": {},
+            "streamSettings": {},
+            "sniffing": {
+                "enabled": True,
+                "destOverride": ["http", "tls", "quic"],
+                "routeOnly": False
             }
         }
 
-        # اضافه کردن API داخلی (برای ارتباط پنل با هسته)
-        config["inbounds"].append({
-            "tag": "api",
-            "port": 10085,
-            "listen": "127.0.0.1",
-            "protocol": "dokodemo-door",
-            "settings": {"address": "127.0.0.1"}
-        })
-
-        # دریافت اینباندهای فعال از دیتابیس
-        active_inbounds = Inbound.query.filter_by(enable=True).all()
+        # 2. تنظیمات پروتکل (Protocol Settings)
+        if protocol == 'vless':
+            clients = [{
+                "id": data.get('vless_id') or str(uuid.uuid4()),
+                "flow": data.get('vless_flow') if data.get('vless_flow') else "",
+                "email": data.get('remark', f"user-{port}")
+            }]
+            inbound['settings'] = {
+                "clients": clients,
+                "decryption": "none",
+                "fallbacks": []
+            }
         
-        for item in active_inbounds:
-            inbound_json = XrayBuilder._build_single_inbound(item)
-            if inbound_json:
-                config["inbounds"].append(inbound_json)
-                # باز کردن پورت در فایروال سیستم
-                SystemOps.allow_port(item.port, "tcp") # Xray معمولا روی TCP و UDP با هم کار میکنه
-                SystemOps.allow_port(item.port, "udp")
-
-        return config
-
-    @staticmethod
-    def _build_single_inbound(item):
-        """تبدیل آبجکت دیتابیس به دیکشنری اینباند"""
-        try:
-            # پارس کردن فیلدهای JSON
-            settings = XrayBuilder._parse_json(item.settings)
-            stream = XrayBuilder._parse_json(item.stream_settings)
-            sniffing = XrayBuilder._parse_json(item.sniffing) or {
-                "enabled": True, "destOverride": ["http", "tls", "quic"]
+        elif protocol == 'vmess':
+            inbound['settings'] = {
+                "clients": [{
+                    "id": data.get('vmess_id') or str(uuid.uuid4()),
+                    "alterId": 0,
+                    "email": data.get('remark')
+                }]
             }
-
-            # ساختار اولیه اینباند
-            inbound = {
-                "tag": f"inbound-{item.id}",
-                "port": item.port,
-                "listen": item.listen or "0.0.0.0",
-                "protocol": item.protocol,
-                "settings": settings,
-                "streamSettings": XrayBuilder._clean_stream_settings(stream),
-                "sniffing": sniffing
+        
+        elif protocol == 'trojan':
+            inbound['settings'] = {
+                "clients": [{
+                    "password": data.get('auth_user') or "password",
+                    "email": data.get('remark')
+                }]
             }
             
-            # اصلاحات خاص پروتکل‌ها (Protocol Specific Fixes)
+        elif protocol == 'shadowsocks':
+            inbound['settings'] = {
+                "method": data.get('ss_method', 'aes-128-gcm'),
+                "password": data.get('ss_password', ''),
+                "network": "tcp,udp"
+            }
             
-            # 1. VLESS / Trojan / VMess -> Clients Array
-            if item.protocol in ['vless', 'vmess', 'trojan']:
-                # مطمئن شویم آرایه clients وجود دارد (ممکن است در جیسون ذخیره نشده باشد)
-                if 'clients' not in settings:
-                    # اینجا باید لاجیک ساخت کلاینت دیفالت رو بذاریم اگر خالی بود
-                    # اما فرض می‌کنیم که پنل قبلاً این رو درست ذخیره کرده
+        elif protocol == 'dokodemo-door':
+            inbound['settings'] = {
+                "address": data.get('doko_address', '127.0.0.1'),
+                "port": int(data.get('doko_port', 80)),
+                "network": data.get('doko_network', 'tcp,udp')
+            }
+            
+        elif protocol == 'wireguard':
+            # طبق داکیومنت، وایرگارد تنظیمات استریم ندارد
+            inbound['settings'] = {
+                "secretKey": data.get('wg_private_key'),
+                "peers": json.loads(data.get('wg_peers', '[]')),
+                "mtu": int(data.get('wg_mtu', 1420))
+            }
+            return inbound  # وایرگارد StreamSettings ندارد
+
+        # 3. تنظیمات انتقال (StreamSettings) - بخش کلیدی و پیچیده
+        network = data.get('stream_network', 'tcp')
+        security = data.get('stream_security', 'none')
+        
+        stream_settings = {
+            "network": network,
+            "security": security,
+            "sockopt": {
+                "mark": int(data.get('tcp_mark', 0)),
+                "tcpFastOpen": data.get('tfo') == 'on',
+                "tproxy": data.get('tproxy', 'off'),
+                "tcpCongestion": data.get('tcp_bbr', 'bbr') if data.get('tcp_bbr') else "bbr",
+                "tcpMptcp": data.get('mptcp') == 'on'
+            }
+        }
+
+        # --- Transport Specifics (جزئیات هر شبکه) ---
+        
+        # TCP / RAW
+        if network == 'tcp' or network == 'raw':
+            stream_settings['tcpSettings'] = {
+                "header": {"type": "none"}
+            }
+            
+        # WebSocket
+        elif network == 'ws':
+            stream_settings['wsSettings'] = {
+                "path": data.get('trans_path', '/'),
+                "headers": {"Host": data.get('trans_host', '')}
+            }
+            
+        # gRPC
+        elif network == 'grpc':
+            stream_settings['grpcSettings'] = {
+                "serviceName": data.get('grpc_service', 'grpc'),
+                "multiMode": data.get('grpc_multi') == 'on'
+            }
+            
+        # HTTPUpgrade (New)
+        elif network == 'httpupgrade':
+            stream_settings['httpupgradeSettings'] = {
+                "path": data.get('trans_path', '/'),
+                "host": data.get('trans_host', '')
+            }
+            
+        # XHTTP (Beyond Reality - طبق داکیومنت جدید)
+        elif network == 'xhttp':
+            xhttp_settings = {
+                "mode": data.get('xhttp_mode', 'auto'),
+                "path": data.get('trans_path', '/'),
+                "host": data.get('trans_host', '')
+            }
+            # اضافه کردن تنظیمات Extra اگر جیسون وارد شده باشد
+            if data.get('xhttp_extra'):
+                try:
+                    extra_json = json.loads(data.get('xhttp_extra'))
+                    xhttp_settings['extra'] = extra_json
+                except:
                     pass
+            stream_settings['xhttpSettings'] = xhttp_settings
 
-            # 2. VLESS Reality -> Flow fix
-            if item.protocol == 'vless' and stream.get('security') == 'reality':
-                if not settings.get('decryption'):
-                    settings['decryption'] = 'none'
-
-            return inbound
-
-        except Exception as e:
-            print(f"Error building inbound {item.id}: {e}")
-            return None
-
-    @staticmethod
-    def _clean_stream_settings(raw_stream):
-        """
-        پاکسازی تنظیمات استریم: حذف فیلدهای اضافی که باعث ارور می‌شوند.
-        مثلا اگر network=tcp باشد، نباید wsSettings ارسال شود.
-        """
-        if not raw_stream: return {}
-        
-        net = raw_stream.get('network', 'tcp')
-        sec = raw_stream.get('security', 'none')
-        
-        clean = {
-            "network": net,
-            "security": sec,
-            "sockopt": raw_stream.get('sockopt', {"mark": 0, "tcpFastOpen": True})
-        }
-
-        # نگاشت تنظیمات شبکه
-        net_map = {
-            'ws': 'wsSettings',
-            'grpc': 'grpcSettings',
-            'httpupgrade': 'httpUpgradeSettings',
-            'xhttp': 'xhttpSettings',
-            'kcp': 'kcpSettings',
-            'tcp': 'tcpSettings'
-        }
-        
-        if net in net_map and net_map[net] in raw_stream:
-            clean[net_map[net]] = raw_stream[net_map[net]]
-
-        # نگاشت تنظیمات امنیت
-        sec_map = {
-            'tls': 'tlsSettings',
-            'reality': 'realitySettings',
-            'xtls': 'xtlsSettings'
-        }
-        
-        if sec in sec_map and sec_map[sec] in raw_stream:
-            clean[sec_map[sec]] = raw_stream[sec_map[sec]]
-
-        return clean
-
-    @staticmethod
-    def _parse_json(data):
-        """تبدیل ایمن رشته به دیکشنری"""
-        if isinstance(data, dict): return data
-        if not data: return {}
-        try:
-            return json.loads(data)
-        except:
-            return {}
-
-    @staticmethod
-    def _write_config_file(config_data):
-        """نوشتن فایل روی دیسک"""
-        try:
-            if not os.path.exists(CONFIG_DIR):
-                os.makedirs(CONFIG_DIR)
+        # mKCP
+        elif network == 'kcp':
+            stream_settings['kcpSettings'] = {
+                "mtu": 1350,
+                "tti": 50,
+                "uplinkCapacity": 50,
+                "downlinkCapacity": 100,
+                "congestion": True,
+                "readBufferSize": 2,
+                "writeBufferSize": 2,
+                "header": {"type": "none"} # یا wechat-video
+            }
             
-            with open(CONFIG_FILE, 'w') as f:
-                json.dump(config_data, f, indent=4)
-            return True
-        except Exception as e:
-            print(f"Write Config Error: {e}")
-            return False
+        # Hysteria (QUIC)
+        elif network == 'hysteria':
+            stream_settings['hysteriaSettings'] = {
+                "up": "100 mbps",
+                "down": "100 mbps",
+                # طبق داک، پسورد احراز هویت در خود پروتکل نیست، در ترنسپورت است اگر پروتکل VLESS نباشد
+                # اما معمولا هیستریا به عنوان پروتکل مستقل استفاده میشه
+            }
+
+        # --- Security Specifics (امنیت) ---
+        
+        if security == 'tls':
+            stream_settings['tlsSettings'] = {
+                "certificates": [{
+                    "certificateFile": data.get('tls_cert'),
+                    "keyFile": data.get('tls_key')
+                }],
+                "alpn": ["h3", "h2", "http/1.1"] if network in ['xhttp', 'hysteria'] else ["h2", "http/1.1"]
+            }
+            
+        elif security == 'reality':
+            # تجزیه نام‌های سرور و شناسه کوتاه
+            snis = [x.strip() for x in data.get('reality_snis', '').split(',') if x.strip()]
+            short_ids = [x.strip() for x in data.get('reality_shortids', '').split(',') if x.strip()]
+            
+            stream_settings['realitySettings'] = {
+                "show": False,
+                "dest": data.get('reality_dest', 'google.com:443'),
+                "xver": 0,
+                "serverNames": snis,
+                "privateKey": data.get('reality_key'),
+                "shortIds": short_ids,
+                "fingerprint": data.get('reality_fingerprint', 'chrome')
+            }
+
+        inbound['streamSettings'] = stream_settings
+        return inbound
+
+    @staticmethod
+    def save_config(inbound_config):
+        config_path = '/usr/local/etc/xray/config.json'
+        
+        # اگر فایل نیست، تمپلیت بساز
+        if not os.path.exists(config_path):
+            base_config = {
+                "log": {"loglevel": "warning"},
+                "inbounds": [],
+                "outbounds": [{"protocol": "freedom", "tag": "direct"}]
+            }
+        else:
+            try:
+                with open(config_path, 'r') as f:
+                    base_config = json.load(f)
+            except:
+                base_config = {"inbounds": [], "outbounds": [{"protocol": "freedom"}]}
+
+        # حذف اینباند تکراری اگر تگ یکسان بود (آپدیت)
+        base_config['inbounds'] = [i for i in base_config.get('inbounds', []) if i.get('tag') != inbound_config['tag']]
+        
+        # افزودن جدید
+        base_config['inbounds'].append(inbound_config)
+        
+        # ذخیره
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
+        with open(config_path, 'w') as f:
+            json.dump(base_config, f, indent=4)
+            
+        return True
