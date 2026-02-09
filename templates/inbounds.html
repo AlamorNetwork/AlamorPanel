@@ -1,60 +1,140 @@
 <div class="modal fade" id="xrayModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <form id="xrayForm" class="modal-content glass-panel border-0 p-0">
             <div class="modal-header border-0 border-bottom border-secondary">
                 <h5 class="modal-title fw-bold text-primary-neon">
-                    <i class="fas fa-microchip me-2"></i>XRAY ADVANCED CORE
+                    <i class="fas fa-microchip me-2"></i>ALAMOR XRAY CONFIGURATOR
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             
-            <div class="modal-body p-4" style="max-height: 80vh; overflow-y: auto;">
-                <div class="glass-card p-3 mb-3">
-                    <h6 class="text-primary-neon small fw-bold mb-3">IDENTITY & BASE</h6>
+            <div class="modal-body p-4" style="max-height: 85vh; overflow-y: auto;">
+                <div class="glass-card p-4 mb-4 border-primary-neon">
+                    <h6 class="text-primary-neon small fw-bold mb-3 ls-2">CORE IDENTITY & TRAFFIC</h6>
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="small text-muted">REMARK</label>
-                            <input name="remark" class="form-control" placeholder="Slytherin-User-01">
+                            <input name="remark" class="form-control" placeholder="Slytherin-Node-01">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label class="small text-muted">PROTOCOL</label>
-                            <select name="protocol" class="form-select">
+                            <select name="protocol" class="form-select" id="protocolSelect">
                                 <option value="vless">VLESS</option>
                                 <option value="vmess">VMess</option>
                                 <option value="trojan">Trojan</option>
+                                <option value="shadowsocks">Shadowsocks 2022</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <label class="small text-muted">PORT</label>
                             <input name="port" type="number" class="form-control" value="443">
                         </div>
-                        <div class="col-md-8">
-                            <label class="small text-muted">UUID / AUTH</label>
-                            <input name="uuid" class="form-control font-monospace" placeholder="Click to Generate">
+                        <div class="col-md-3">
+                            <label class="small text-muted">TOTAL FLOW (GB)</label>
+                            <input name="total" type="number" class="form-control" placeholder="0 = ∞">
                         </div>
                     </div>
                 </div>
 
                 <div class="accordion" id="xrayAccordion">
                     
-                    <div class="accordion-item glass-card bg-transparent">
+                    <div class="accordion-item glass-card bg-transparent mb-3">
                         <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSock">
-                                <i class="fas fa-network-wired me-2"></i> Transmission & Sockopt
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAuth">
+                                <i class="fas fa-fingerprint me-2"></i> Auth, Encryption & Flow (Vision)
                             </button>
                         </h2>
-                        <div id="collapseSock" class="accordion-collapse collapse" data-bs-parent="#xrayAccordion">
-                            <div class="accordion-body grid grid-cols-1 gap-3">
-                                <div class="row g-2">
-                                    <div class="col-6"><input name="tcp_congestion" class="form-control form-control-sm" placeholder="TCP Congestion (bbr)"></div>
-                                    <div class="col-6"><input name="tcp_tfo" type="checkbox" class="form-check-input me-2"> <span class="small">TCP Fast Open</span></div>
+                        <div id="collapseAuth" class="accordion-collapse collapse" data-bs-parent="#xrayAccordion">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="small text-muted">UUID / PASSWORD</label>
+                                        <div class="input-group">
+                                            <input name="uuid" class="form-control font-monospace" id="uuidInput">
+                                            <button type="button" class="btn btn-outline-primary" onclick="genUUID()"><i class="fas fa-sync"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="small text-muted">FLOW (Vision)</label>
+                                        <select name="flow" class="form-select">
+                                            <option value="">None (Standard)</option>
+                                            <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+                                            <option value="xtls-rprx-vision-udp443">xtls-rprx-vision-udp443</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="mt-2">
-                                    <label class="small text-muted">DOMAIN STRATEGY</label>
-                                    <select name="domain_strategy" class="form-select form-select-sm">
-                                        <option value="AsIs">AsIs</option>
-                                        <option value="UseIP">UseIP</option>
-                                    </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item glass-card bg-transparent mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed text-info" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransport">
+                                <i class="fas fa-shuttle-space me-2"></i> Advanced Transport Layer (XHTTP / XMUX)
+                            </button>
+                        </h2>
+                        <div id="collapseTransport" class="accordion-collapse collapse" data-bs-parent="#xrayAccordion">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="small text-muted">NETWORK TYPE</label>
+                                        <select name="network" class="form-select" id="netSelect">
+                                            <option value="raw">RAW (TCP)</option>
+                                            <option value="xhttp">XHTTP (Beyond REALITY)</option>
+                                            <option value="ws">WebSocket</option>
+                                            <option value="grpc">gRPC</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="small text-muted">PATH (REQUIRED FOR XHTTP/WS)</label>
+                                        <input name="path" class="form-control" placeholder="/slytherin-path">
+                                    </div>
+                                </div>
+                                <div id="xhttpFields" class="mt-4 p-3 bg-black bg-opacity-25 rounded border border-info border-opacity-10 d-none">
+                                    <h6 class="text-info small fw-bold mb-3">XMUX & UPLINK CONTROL</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-3"><input name="xmux_con" class="form-control form-control-sm" placeholder="Max Concurrency (16-32)"></div>
+                                        <div class="col-md-3"><input name="xmux_reuse" class="form-control form-control-sm" placeholder="Max Reuse Times"></div>
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch mt-1">
+                                                <input name="no_sse" type="checkbox" class="form-check-input"> <span class="small">Disable SSE Header</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item glass-card bg-transparent mb-3">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed text-success" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSecurity">
+                                <i class="fas fa-shield-halved me-2"></i> Security (REALITY / TLS / ECH)
+                            </button>
+                        </h2>
+                        <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#xrayAccordion">
+                            <div class="accordion-body">
+                                <select name="security" class="form-select mb-3" onchange="toggleSecurityUI(this.value)">
+                                    <option value="none">None</option>
+                                    <option value="tls">TLS</option>
+                                    <option value="reality">REALITY</option>
+                                </select>
+                                
+                                <div id="realityFields" class="row g-3 d-none">
+                                    <div class="col-md-6"><input name="re_dest" class="form-control" placeholder="Target (google.com:443)"></div>
+                                    <div class="col-md-6"><input name="re_sni" class="form-control" placeholder="ServerNames (SNI)"></div>
+                                    <div class="col-md-12"><input name="re_priv" class="form-control font-monospace" placeholder="Private Key"></div>
+                                    <div class="col-md-6"><input name="re_sid" class="form-control" placeholder="Short IDs (hex)"></div>
+                                    <div class="col-md-6"><input name="re_spx" class="form-control" placeholder="SpiderX Path"></div>
+                                </div>
+
+                                <div id="tlsFields" class="row g-3 d-none">
+                                    <div class="col-md-12"><textarea name="ech_keys" class="form-control bg-dark text-cyan small" rows="3" placeholder="ECH Server Keys (xray tls ech)"></textarea></div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            <input name="tls_reject_sni" type="checkbox" class="form-check-input"> <span class="small">Reject Unknown SNI</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -62,24 +142,28 @@
 
                     <div class="accordion-item glass-card bg-transparent">
                         <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSecurity">
-                                <i class="fas fa-shield-alt me-2"></i> Security (Reality / TLS)
+                            <button class="accordion-button collapsed text-warning" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSock">
+                                <i class="fas fa-microchip me-2"></i> Sockopt (BBR, TProxy, MPTCP)
                             </button>
                         </h2>
-                        <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#xrayAccordion">
+                        <div id="collapseSock" class="accordion-collapse collapse" data-bs-parent="#xrayAccordion">
                             <div class="accordion-body">
-                                <div class="mb-3">
-                                    <label class="small text-muted">SECURITY TYPE</label>
-                                    <select name="security" class="form-select form-select-sm" onchange="toggleSecurityUI(this.value)">
-                                        <option value="none">None</option>
-                                        <option value="tls">TLS</option>
-                                        <option value="reality">REALITY</option>
-                                    </select>
-                                </div>
-                                <div id="realityFields" class="d-none space-y-2">
-                                    <input name="reality_dest" class="form-control form-control-sm mb-2" placeholder="Dest (e.g. google.com:443)">
-                                    <input name="reality_sni" class="form-control form-control-sm mb-2" placeholder="Server Names (SNI)">
-                                    <input name="reality_privkey" class="form-control form-control-sm" placeholder="Private Key">
+                                <div class="row g-3">
+                                    <div class="col-md-4"><input name="tcp_bbr" class="form-control" placeholder="TCP Congestion (bbr)"></div>
+                                    <div class="col-md-4"><input name="tcp_mark" type="number" class="form-control" placeholder="SO_MARK"></div>
+                                    <div class="col-md-4">
+                                        <select name="tproxy" class="form-select">
+                                            <option value="off">TProxy: OFF</option>
+                                            <option value="tproxy">TProxy: ON</option>
+                                            <option value="redirect">Redirect</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 grid grid-cols-2 md:grid-cols-4 gap-3 bg-black bg-opacity-25 p-3 rounded">
+                                        <label class="small"><input type="checkbox" name="tfo" class="form-check-input me-1"> TFO</label>
+                                        <label class="small"><input type="checkbox" name="mptcp" class="form-check-input me-1"> Multipath TCP</label>
+                                        <label class="small"><input type="checkbox" name="v6only" class="form-check-input me-1"> V6 Only</label>
+                                        <label class="small"><input type="checkbox" name="proxy_proto" class="form-check-input me-1"> Proxy Protocol</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -88,7 +172,9 @@
                 </div> </div>
 
             <div class="modal-footer border-0 p-4">
-                <button type="button" class="btn btn-glass w-100" onclick="submitXray()">INITIALIZE DEPLOYMENT</button>
+                <button type="button" class="btn btn-glass w-100 py-3 fw-bold" onclick="submitXray()">
+                    <i class="fas fa-rocket me-2"></i>DEPLOY STEALTH UNIT
+                </button>
             </div>
         </form>
     </div>
