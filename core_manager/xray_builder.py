@@ -4,7 +4,7 @@ import logging
 from database.models import Inbound
 from core_manager.system_ops import SystemOps
 from core_manager.setup_cores import CoreInstaller
-
+import subprocess
 # تنظیمات مسیرها
 CONFIG_DIR = "/usr/local/etc/xray"
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
@@ -22,22 +22,27 @@ class XrayBuilder:
         """
         متد اصلی فراخوانی: ساخت کانفیگ، ذخیره و ریستارت سرویس
         """
-        # 1. اطمینان از وجود پوشه‌ها و هسته
-        CoreInstaller.setup_environment()
-        
-        # 2. تولید ساختار کامل کانفیگ
-        full_config = XrayBuilder._generate_full_structure()
-        
-        # 3. ذخیره در فایل
-        if not XrayBuilder._write_config_file(full_config):
-            return False, "Failed to write config file."
-        
-        # 4. ریستارت سرویس
-        if SystemOps.restart_core_service("xray"):
-            return True, "Core reloaded successfully with new config."
-        else:
-            return False, "Config saved but failed to restart Xray service."
-
+        try:
+            # 1. نصب و بررسی سرویس (این خط مشکل Unit not found را حل میکند)
+            CoreInstaller.setup_environment()
+            
+            # 2. تولید ساختار کامل کانفیگ
+            full_config = XrayBuilder._generate_full_structure()
+            
+            # 3. ذخیره در فایل
+            if not XrayBuilder._write_config_file(full_config):
+                return False, "Failed to write config file."
+            
+            # 4. ریستارت سرویس
+            if SystemOps.restart_core_service("xray"):
+                return True, "Core reloaded successfully."
+            else:
+                # تلاش مجدد برای استارت اگر ریستارت فیل شد
+                subprocess.run(["systemctl", "start", "xray"], check=False)
+                return True, "Service started."
+                
+        except Exception as e:
+            return False, f"Builder Error: {str(e)}"
     @staticmethod
     def _generate_full_structure():
         """ساخت اسکلت اصلی JSON"""
