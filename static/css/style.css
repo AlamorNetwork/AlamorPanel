@@ -1,61 +1,33 @@
-:root {
-    --slytherin: #2ecc71;
-    --dark-bg: #05070a;
-    --glass: rgba(15, 23, 42, 0.7);
-    --neon-glow: 0 0 15px rgba(46, 204, 113, 0.4);
+/* Specific Protocol Accents for AlamorHub */
+.text-primary-neon { color: var(--primary-neon) !important; text-shadow: 0 0 10px var(--primary-neon); }
+.ls-2 { letter-spacing: 2px; }
+
+/* Accordion Styling inside Modals */
+.accordion-item.glass-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 10px;
 }
 
-body {
-    background-color: var(--dark-bg);
-    background-image: radial-gradient(circle at 10% 20%, rgba(46, 204, 113, 0.05) 0%, transparent 40%);
-    color: #cbd5e1;
-    font-family: 'Segoe UI', Tahoma, sans-serif;
+.accordion-button {
+    background: transparent !important;
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: none !important;
 }
 
-.glass-card {
-    background: var(--glass);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(46, 204, 113, 0.15);
-    border-radius: 1.5rem;
-    transition: all 0.3s ease;
+.accordion-button:not(.collapsed) {
+    color: var(--primary-neon) !important;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.2);
 }
 
-.glass-card:hover {
-    border-color: var(--slytherin);
-    box-shadow: var(--neon-glow);
+.accordion-button::after {
+    filter: invert(1);
 }
 
-.cyber-input {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(46, 204, 113, 0.2);
-    color: #fff;
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
-    width: 100%;
-    outline: none;
-    transition: 0.3s;
-}
-
-.cyber-input:focus {
-    border-color: var(--slytherin);
-    box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
-}
-
-.section-title {
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--slytherin);
-    border-right: 4px solid var(--slytherin);
-    padding-right: 15px;
-    margin-bottom: 20px;
-}
-
-/* Tab Animation */
-.tab-content { display: none; }
-.tab-content.active { display: block; animation: fadeIn 0.4s ease; }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Custom Checkbox for Cyber Theme */
+.form-check-input:checked {
+    background-color: var(--primary-neon);
+    border-color: var(--primary-neon);
+    box-shadow: 0 0 10px var(--primary-neon);
 }
